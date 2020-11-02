@@ -210,6 +210,9 @@ void MapPanel::DrawMiniMap(const PlayerInfo &player, float alpha, const System *
 	set<const System *> drawnSystems = { jump[0], jump[1] };
 	bool isLink = jump[0]->Links().count(jump[1]);
 	
+	// Don't draw dotted line if system is jumpable via custom links
+	isLink |= jump[0]->CustomLinkJumpable(jump[1], *player.Flagship());
+
 	const Set<Color> &colors = GameData::Colors();
 	const Color &currentColor = colors.Get("active mission")->Additive(alpha * 2.f);
 	const Color &blockedColor = colors.Get("blocked mission")->Additive(alpha * 2.f);
@@ -235,6 +238,39 @@ void MapPanel::DrawMiniMap(const PlayerInfo &player, float alpha, const System *
 				alpha * gov->GetColor().Get()[2], 0.f);
 		RingShader::Draw(from, OUTER, INNER, color);
 		
+				// Draw custom links
+		for(const CustomLink customLink : (system->CustomLinks()))
+		{
+			if (customLink.CanTravel(*player.Flagship())) // Comment this out if you want to be able to see links not available to the player
+			{
+
+				// Draw the line
+				Color linkColor = GameData::CustomLinkTypes().Get(customLink.linkType)->closeColor;
+				Point to = customLink.system->Position() - center + drawPos;
+				Point unit = (from - to).Unit() * LINK_OFFSET;
+				LineShader::Draw(from - unit, to + unit, LINK_WIDTH, linkColor);
+
+
+				// Make sure we didn't already draw this system
+				if(drawnSystems.count(customLink.system))
+					continue;
+				drawnSystems.insert(customLink.system);
+
+				// Draw the system this link leads to
+				const System *link = customLink.system;
+				gov = link->GetGovernment();
+				Color color = Color(.5f * alpha, 0.f);
+				if(player.HasVisited(link) && link->IsInhabited(flagship) && gov)
+					color = Color(
+						alpha * gov->GetColor().Get()[0],
+						alpha * gov->GetColor().Get()[1],
+						alpha * gov->GetColor().Get()[2], 0.f);
+				RingShader::Draw(to, OUTER, INNER, color);
+
+			}
+		}
+
+
 		for(const System *link : system->Links())
 		{
 			// Only draw systems known to be attached to the jump systems.
@@ -803,6 +839,23 @@ void MapPanel::UpdateCache()
 				bool isClose = (system == playerSystem || link == playerSystem);
 				links.emplace_back(system->Position(), link->Position(), isClose ? closeColor : farColor);
 			}
+		 // Generate custom links now
+
+		for(CustomLink customlink : system->CustomLinks())
+		{
+			const System * link = customlink.system;
+			if(link < system || !player.HasSeen(link) || player.HasVisited(system))
+			{
+				// Same as above, but fetch the color from GameData first
+				if(!player.HasVisited(system) && !player.HasVisited(link))
+					continue;
+				bool isClose = (system == playerSystem || link == playerSystem);
+
+				auto linkTypeData = GameData::CustomLinkTypes().Get(customlink.linkType);
+
+				links.emplace_back(system->Position(), link->Position(), isClose ? linkTypeData->closeColor : linkTypeData->farColor);
+			}
+		}
 	}
 }
 

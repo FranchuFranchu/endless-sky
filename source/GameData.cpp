@@ -17,6 +17,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Color.h"
 #include "Command.h"
 #include "Conversation.h"
+#include "CustomLink.h"
 #include "DataFile.h"
 #include "DataNode.h"
 #include "DataWriter.h"
@@ -67,6 +68,7 @@ using namespace std;
 namespace {
 	Set<Color> colors;
 	Set<Conversation> conversations;
+	Set<CustomLinkType> customLinkTypes;
 	Set<Effect> effects;
 	Set<GameEvent> events;
 	Set<Fleet> fleets;
@@ -591,6 +593,11 @@ const Set<Conversation> &GameData::Conversations()
 }
 
 
+const Set<CustomLinkType> &GameData::CustomLinkTypes()
+{
+	return customLinkTypes;
+}
+
 
 const Set<Effect> &GameData::Effects()
 {
@@ -923,6 +930,8 @@ void GameData::LoadFile(const string &path, bool debugMode)
 				node.Value(2), node.Value(3), node.Value(4), node.Value(5));
 		else if(key == "conversation" && node.Size() >= 2)
 			conversations.Get(node.Token(1))->Load(node);
+		else if(key == "linktype" && node.Size() >= 2)
+			customLinkTypes.Get(node.Token(1))->Load(node);
 		else if(key == "effect" && node.Size() >= 2)
 			effects.Get(node.Token(1))->Load(node);
 		else if(key == "event" && node.Size() >= 2)

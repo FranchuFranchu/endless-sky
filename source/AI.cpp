@@ -37,8 +37,10 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include <algorithm>
 #include <cmath>
+#include <iostream> 
 #include <limits>
 #include <set>
+#include <sstream> 
 
 using namespace std;
 
@@ -1781,12 +1783,16 @@ void AI::PrepareForHyperspace(Ship &ship, Command &command)
 	
 	bool isJump = !hasHyperdrive || !ship.GetSystem()->Links().count(ship.GetTargetSystem());
 	
+	// Check if system is jumpable through custom links
+	isJump &= !(ship.CanTravelThroughCustomLinks(ship.GetSystem(), ship.GetTargetSystem()));
+
 	Point direction = ship.GetTargetSystem()->Position() - ship.GetSystem()->Position();
+	
 	if(!isJump && scramThreshold)
 	{
 		direction = direction.Unit();
 		Point normal(-direction.Y(), direction.X());
-		
+		std::cout << normal.X() << " " << normal.Y() << "\n";
 		double deviation = ship.Velocity().Dot(normal);
 		if(fabs(deviation) > scramThreshold)
 		{
@@ -2963,11 +2969,11 @@ double AI::RendezvousTime(const Point &p, const Point &v, double vp)
 	// to intersect the target?
 	// (p.x + v.x*t)^2 + (p.y + v.y*t)^2 = vp^2*t^2
 	// p.x^2 + 2*p.x*v.x*t + v.x^2*t^2
-	//    + p.y^2 + 2*p.y*v.y*t + v.y^2t^2
-	//    - vp^2*t^2 = 0
+	//	+ p.y^2 + 2*p.y*v.y*t + v.y^2t^2
+	//	- vp^2*t^2 = 0
 	// (v.x^2 + v.y^2 - vp^2) * t^2
-	//    + (2 * (p.x * v.x + p.y * v.y)) * t
-	//    + (p.x^2 + p.y^2) = 0
+	//	+ (2 * (p.x * v.x + p.y * v.y)) * t
+	//	+ (p.x^2 + p.y^2) = 0
 	double a = v.Dot(v) - vp * vp;
 	double b = 2. * p.Dot(v);
 	double c = p.Dot(p);
@@ -3443,6 +3449,14 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player)
 			keyStuck.Clear();
 			if(isNewPress)
 				Audio::Play(Audio::Get("fail"));
+		}
+		else if(ship.CustomDriveFuel(ship.GetTargetSystem()))
+		{
+			Messages::Add("Jumping through custom link..");
+			PrepareForHyperspace(ship, command);
+			command |= Command::JUMP;
+			if(keyHeld.Has(Command::JUMP))
+				command |= Command::WAIT;
 		}
 		else if(!ship.JumpFuel(ship.GetTargetSystem()))
 		{

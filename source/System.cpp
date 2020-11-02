@@ -13,6 +13,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "System.h"
 
 #include "Angle.h"
+#include "CustomLink.h"
 #include "DataNode.h"
 #include "Date.h"
 #include "Fleet.h"
@@ -201,6 +202,18 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 				links.erase(GameData::Systems().Get(value));
 			else
 				links.insert(GameData::Systems().Get(value));
+		}
+		else if(key == "customlink" && child.Size() >= 3)
+		{
+			// Make a custom link of type [second argument] and to [first argument]
+			CustomLink link;
+			link.linkType = child.Token(valueIndex + 1);
+			link.system = GameData::Systems().Get(child.Token(valueIndex));
+
+			if(remove)
+				customLinks.erase(customLinks.find(link));
+			else
+				customLinks.insert(link);
 		}
 		else if(key == "asteroids")
 		{
@@ -431,7 +444,41 @@ const set<const System *> &System::Links() const
 	return links;
 }
 
+set<CustomLink> System::CustomLinks() const
+{
+	return customLinks;
+}
 
+// Get a list of custom links directing to a system
+set<CustomLink> System::CustomLinksTo(const System * target) const
+{
+	set<CustomLink> linksToReturn;
+	for(CustomLink customlink : customLinks)
+	{
+		if (customlink.system == target)
+			linksToReturn.insert(customlink);
+	}
+	return linksToReturn;
+}
+
+// Check if a ship can jump to the target system using a custom link jump
+bool System::CustomLinkJumpable(const System * target, const Ship ship) const
+{
+	for(const CustomLink customLink : CustomLinksTo(target))
+		if (customLink.CanTravel(ship))
+			return true;
+	return false;
+}
+
+
+// Function above, but overloaded with outfits
+bool System::CustomLinkJumpable(const System * target, const Outfit outfit) const
+{
+	for(const CustomLink customLink : CustomLinksTo(target))
+		if (customLink.CanTravel(outfit))
+			return true;
+	return false;
+}
 
 // Get a list of systems you can "see" from here, whether or not there is a
 // direct hyperspace link to them. This is also the set of systems that you

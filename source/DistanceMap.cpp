@@ -25,8 +25,8 @@ using namespace std;
 // Find paths to the given system. If the given maximum count is above zero,
 // it is a limit on how many systems should be returned. If it is below zero
 // it specifies the maximum distance away that paths should be found.
-DistanceMap::DistanceMap(const System *center, int maxCount, int maxDistance)
-	: center(center), maxCount(maxCount), maxDistance(maxDistance), useWormholes(false)
+DistanceMap::DistanceMap(const System *center, int maxCount, int maxDistance, bool isOnOutfitter)
+	: center(center), maxCount(maxCount), maxDistance(maxDistance), isOnOutfitter(isOnOutfitter), useWormholes(false)
 {
 	Init();
 }
@@ -190,6 +190,7 @@ void DistanceMap::Init(const Ship *ship)
 			if(!hasWormhole)
 				return;
 		}
+		shipAttrs = ship->Attributes();
 	}
 	
 	// Find the route with lowest fuel use. If multiple routes use the same fuel,
@@ -262,7 +263,24 @@ bool DistanceMap::Propagate(Edge edge, bool useJump)
 		// selected by the player, they are constrained to known routes.
 		if(HasBetter(link, edge) || !CheckLink(edge.next, link, useJump))
 			continue;
-		
+	
+		Add(link, edge);
+		if(!--maxCount)
+			return false;
+	}
+	// Check if system is jumpable through custom links
+	for(const CustomLink customLink : (edge.next->CustomLinks()))
+	{
+		// Hyperlink types don't matter if the player is buying a local map
+		if (!isOnOutfitter)
+			if (!customLink.CanTravel(shipAttrs))
+				continue;
+
+		auto link = customLink.system;
+		// Exact same thing as above, but using custom links
+		if(HasBetter(link, edge) || !CheckLink(edge.next, link, useJump))
+			continue;
+	
 		Add(link, edge);
 		if(!--maxCount)
 			return false;
@@ -311,6 +329,11 @@ bool DistanceMap::CheckLink(const System *from, const System *to, bool useJump) 
 	// know if a link exists, so you must have explored at least one of them.
 	if(useJump && from->Position().Distance(to->Position()) <= System::NEIGHBOR_DISTANCE)
 		return true;
+
+	// Check if the system can be reached with custom links
+	if(from->CustomLinkJumpable(to, shipAttrs))
+		return true;
+
 	
 	return (player->HasVisited(from) || player->HasVisited(to));
 }

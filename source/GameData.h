@@ -24,6 +24,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 class Color;
 class Conversation;
+class CustomLink;
+class CustomLinkType;
 class DataNode;
 class DataWriter;
 class Date;
@@ -93,6 +95,7 @@ public:
 	
 	static const Set<Color> &Colors();
 	static const Set<Conversation> &Conversations();
+	static const Set<CustomLinkType> &CustomLinkTypes();
 	static const Set<Effect> &Effects();
 	static const Set<GameEvent> &Events();
 	static const Set<Fleet> &Fleets();

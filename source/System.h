@@ -13,6 +13,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+#include "CustomLink.h"
 #include "Point.h"
 #include "Set.h"
 #include "StellarObject.h"
@@ -21,6 +22,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <string>
 #include <vector>
 
+class CustomLink;
 class DataNode;
 class Date;
 class Fleet;
@@ -95,6 +97,17 @@ public:
 	
 	// Get a list of systems you can travel to through hyperspace from here.
 	const std::set<const System *> &Links() const;
+
+	// Get a list of systems you can travel to through custom hyperlinks
+	std::set<CustomLink>  CustomLinks() const;
+
+	// Get a list of custom hyperlinks leading to a system
+	std::set<CustomLink>  CustomLinksTo(const System * target) const;
+
+	// Check if a ship/outfit can jump to the target system using a custom link jump
+	bool CustomLinkJumpable(const System * target, const Ship ship) const;
+	bool CustomLinkJumpable(const System * target, const Outfit outfit) const;
+
 	// Get a list of systems you can "see" from here, whether or not there is a
 	// direct hyperspace link to them. This is also the set of systems that you
 	// can travel to from here via the jump drive.
@@ -170,6 +183,9 @@ private:
 	// Hyperspace links to other systems.
 	std::set<const System *> links;
 	std::set<const System *> neighbors;
+
+	// Other kinds of hyperspace links
+	std::set<CustomLink> customLinks;
 	
 	// Stellar objects, listed in such an order that an object's parents are
 	// guaranteed to appear before it (so that if we traverse the vector in

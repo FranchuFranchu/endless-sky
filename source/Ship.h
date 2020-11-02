@@ -264,8 +264,11 @@ public:
 	// Get the cost of making a jump of the given type (if possible).
 	double HyperdriveFuel() const;
 	double JumpDriveFuel() const;
+	double CustomDriveFuel(const System *destination = nullptr) const;
 	// Get the amount of fuel missing for the next jump (smart refuelling)
 	double JumpFuelMissing() const;
+	// Checks outfitting to see if the ship can travel between these systems
+	bool CanTravelThroughCustomLinks(const System * source, const System * destination) const;
 	// Get the heat level at idle.
 	double IdleHeat() const;
 	// Get the heat dissipation, in heat units per heat unit per frame.

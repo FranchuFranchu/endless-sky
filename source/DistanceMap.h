@@ -13,11 +13,14 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #ifndef DISTANCE_MAP_H_
 #define DISTANCE_MAP_H_
 
+#include "Ship.h"
+
 #include <map>
 #include <queue>
 #include <set>
 #include <utility>
 
+class Outfit;
 class PlayerInfo;
 class Ship;
 class System;
@@ -33,7 +36,7 @@ class DistanceMap {
 public:
 	// Find paths to the given system. The optional arguments put a limit on how
 	// many systems will be returned and how far away they are allowed to be.
-	explicit DistanceMap(const System *center, int maxCount = -1, int maxDistance = -1);
+	explicit DistanceMap(const System *center, int maxCount = -1, int maxDistance = -1, bool isOnOutfitter = false);
 	// If a player is given, the map will only use hyperspace paths known to the
 	// player; that is, one end of the path has been visited. Also, if the
 	// player's flagship has a jump drive, the jumps will be make use of it.
@@ -105,11 +108,15 @@ private:
 	const System *center = nullptr;
 	int maxCount = -1;
 	int maxDistance = -1;
+	// If this DistanceMap was invoked for a map-type outfit
+	bool isOnOutfitter = false;
+
 	// How much fuel is used for travel. If either value is zero, it means that
 	// the ship does not have that type of drive.
 	int hyperspaceFuel = 100;
 	int jumpFuel = 0;
 	bool useWormholes = true;
+	Outfit shipAttrs;
 };
 
 

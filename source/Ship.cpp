@@ -1334,6 +1334,8 @@ void Ship::Move(vector<Visual> &visuals, list<shared_ptr<Flotsam>> &flotsam)
 	{
 		hyperspaceSystem = GetTargetSystem();
 		isUsingJumpDrive = !attributes.Get("hyperdrive") || !currentSystem->Links().count(hyperspaceSystem);
+		// TODO make the custom link type plugin be able to configurate if this is executed for this custom link type
+		isUsingJumpDrive &= !CanTravelThroughCustomLinks(currentSystem, hyperspaceSystem);
 		hyperspaceFuelCost = JumpFuel(hyperspaceSystem);
 	}
 	
@@ -2431,6 +2433,13 @@ double Ship::JumpFuel(const System *destination) const
 		return max(JumpDriveFuel(), HyperdriveFuel());
 	
 	// Figure out what sort of jump we're making.
+
+	// Custom links have the highest priority
+	if (CustomDriveFuel(destination)) {
+		Messages::Add("Using custom drive fuel");
+		return CustomDriveFuel(destination);
+	}
+
 	if(attributes.Get("hyperdrive") && currentSystem->Links().count(destination))
 		return HyperdriveFuel();
 	
@@ -2467,7 +2476,23 @@ double Ship::JumpDriveFuel() const
 	return BestFuel("jump drive", "", 200.);
 }
 
+double Ship::CustomDriveFuel(const System *destination) const
+{
+	for (CustomLink customLink: currentSystem->CustomLinksTo(destination))
+	{
 
+		CustomLinkType linkType = *GameData::CustomLinkTypes().Get(customLink.linkType);
+		string requiredAttribute = linkType.requirement;
+
+		// Don't bother searching if there is no required drive
+		if (!attributes.Get(requiredAttribute))
+			continue;
+		else
+			return BestFuel(requiredAttribute, "", 100.);
+	};
+	// No custom link usable by the player
+	return 0.;
+}
 
 double Ship::JumpFuelMissing() const
 {
@@ -2480,7 +2505,17 @@ double Ship::JumpFuelMissing() const
 	return jumpFuel - fuel;
 }
 
-
+bool Ship::CanTravelThroughCustomLinks(const System * source, const System * destination) const
+{
+	for(const CustomLink customlink : source->CustomLinksTo(destination)) {
+        const CustomLinkType* linkType = GameData::CustomLinkTypes().Get(customlink.linkType);
+        if(linkType->CanTravel(*this)) {
+        	return true;
+        }
+	}
+	// No possible custom links
+	return false;
+}
 
 // Get the heat level at idle.
 double Ship::IdleHeat() const
