@@ -1,0 +1,20 @@
+
+linktype "Sigma"
+	color 0.5 0.5 0 1
+	"far color" 0.5 0.5 0 0.5
+	"unusable color" 0 0.5 0.5 0.3
+	requires "Sigma Drive"
+
+
+linktype "Kappa"
+	color 0.5 0.5 0 1
+	"far color" 0.5 0.5 0 0.5
+	"unusable color" 0.5 0.5 0 0.3
+	requires "Kappa Drive"
+
+
+linktype "Theta"
+	color 0.5 0 0.5 1
+	"far color" 0.5 0 0.5 0.5
+	"unusable color" 0.5 0 0.5 0.3
+	requires "Theta Drive"

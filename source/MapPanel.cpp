@@ -238,36 +238,41 @@ void MapPanel::DrawMiniMap(const PlayerInfo &player, float alpha, const System *
 				alpha * gov->GetColor().Get()[2], 0.f);
 		RingShader::Draw(from, OUTER, INNER, color);
 		
-				// Draw custom links
+		// Draw custom links
 		for(const CustomLink customLink : (system->CustomLinks()))
 		{
-			if (customLink.CanTravel(*player.Flagship())) // Comment this out if you want to be able to see links not available to the player
+			Color linkColor;
+
+			// Choose correct color
+			if (customLink.CanTravel(*player.Flagship()))
+			{	
+				linkColor = GameData::CustomLinkTypes().Get(customLink.linkType)->closeColor;
+			} else 
 			{
-
-				// Draw the line
-				Color linkColor = GameData::CustomLinkTypes().Get(customLink.linkType)->closeColor;
-				Point to = customLink.system->Position() - center + drawPos;
-				Point unit = (from - to).Unit() * LINK_OFFSET;
-				LineShader::Draw(from - unit, to + unit, LINK_WIDTH, linkColor);
-
-
-				// Make sure we didn't already draw this system
-				if(drawnSystems.count(customLink.system))
-					continue;
-				drawnSystems.insert(customLink.system);
-
-				// Draw the system this link leads to
-				const System *link = customLink.system;
-				gov = link->GetGovernment();
-				Color color = Color(.5f * alpha, 0.f);
-				if(player.HasVisited(link) && link->IsInhabited(flagship) && gov)
-					color = Color(
-						alpha * gov->GetColor().Get()[0],
-						alpha * gov->GetColor().Get()[1],
-						alpha * gov->GetColor().Get()[2], 0.f);
-				RingShader::Draw(to, OUTER, INNER, color);
-
+				linkColor = GameData::CustomLinkTypes().Get(customLink.linkType)->unusableCloseColor;
 			}
+			// Draw the line
+
+			Point to = customLink.system->Position() - center + drawPos;
+			Point unit = (from - to).Unit() * LINK_OFFSET;
+			LineShader::Draw(from - unit, to + unit, LINK_WIDTH, linkColor);
+
+
+			// Make sure we didn't already draw this system
+			if(drawnSystems.count(customLink.system))
+				continue;
+			drawnSystems.insert(customLink.system);
+
+			// Draw the system this link leads to
+			const System *link = customLink.system;
+			gov = link->GetGovernment();
+			Color color = Color(.5f * alpha, 0.f);
+			if(player.HasVisited(link) && link->IsInhabited(flagship) && gov)
+				color = Color(
+					alpha * gov->GetColor().Get()[0],
+					alpha * gov->GetColor().Get()[1],
+					alpha * gov->GetColor().Get()[2], 0.f);
+			RingShader::Draw(to, OUTER, INNER, color);
 		}
 
 
@@ -851,9 +856,19 @@ void MapPanel::UpdateCache()
 					continue;
 				bool isClose = (system == playerSystem || link == playerSystem);
 
-				auto linkTypeData = GameData::CustomLinkTypes().Get(customlink.linkType);
+				const CustomLinkType * linkTypeData = GameData::CustomLinkTypes().Get(customlink.linkType);
+				bool canTravel = linkTypeData->CanTravel(*player.Flagship());
+				printf("%d\n", canTravel);
 
-				links.emplace_back(system->Position(), link->Position(), isClose ? linkTypeData->closeColor : linkTypeData->farColor);
+
+				links.emplace_back(system->Position(), link->Position(), 
+					// This ternary is evil
+					isClose ? (
+						canTravel ? linkTypeData->closeColor : linkTypeData->unusableCloseColor
+					) : (
+						canTravel ? linkTypeData->farColor : linkTypeData->unusableFarColor
+					)
+				);
 			}
 		}
 	}

@@ -1,0 +1,5 @@
+government "Independent"
+	swizzle 0
+	color .30 .60 .20
+	
+	"player reputation" 100

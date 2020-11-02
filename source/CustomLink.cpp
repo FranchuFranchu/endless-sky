@@ -17,6 +17,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Outfit.h"
 #include "System.h"
 
+#include <string>
 
 using namespace std;
 
@@ -44,15 +45,76 @@ bool CustomLink::CanTravel(const Outfit &outfit) const{
 
 // Load this link
 void CustomLinkType::Load(const DataNode &node) {
+    string color_names[] = {"color", "far color", "unusable color", "unusable far color"};
+    Color* color_pointers[] = {&closeColor, &farColor, &unusableCloseColor, &unusableFarColor};
+    bool was_defined[] = {false, false, false, false};
+    *(color_pointers[0]) = Color(0.0,0.0);
     for(const DataNode &child : node)
     {
-        if (child.Token(0) == "requires")
+        if(child.Size() < 2)
+        {
+            child.PrintTrace("Skipping " + child.Token(0) + " with no key given:");
+            continue;
+        }
+        else if (child.Token(0) == "requires") 
+        {
             requirement = child.Token(1);
-        else if(child.Token(0) == "color" && child.Size() >= 4)
-            closeColor = Color(child.Value(1), child.Value(2), child.Value(3));
-        else if(child.Token(0) == "farcolor" && child.Size() >= 4)
-            farColor = Color(child.Value(1), child.Value(2), child.Value(3), 0.5f);
+            continue;
+        }
 
+        // I have to do this to avoid using a goto
+        bool found_color = false;
+        for (uint i = 0; i < (sizeof(color_names) / sizeof(string)); ++i) 
+        {
+            bool is_far = i % 2;
+            bool is_unusable = i > 1;
+            if (child.Token(0) == color_names[i]) 
+            {
+                if (child.Size() == 4) 
+                {
+                    if (is_unusable) {
+                        child.PrintTrace(string("Warning: Custom link color when unusable \"") + color_names[i] + "\"did not specify an alpha value, so 0.0 (transparent) was assumed.");
+                        *color_pointers[i] = Color(child.Value(1), child.Value(2), child.Value(3), 0);
+                    } else {
+                        *color_pointers[i] = Color(child.Value(1), child.Value(2), child.Value(3), 0.5 ? is_far : 1);
+                    }
+                }
+                if (child.Size() == 5) 
+                {
+                    *color_pointers[i] = Color(child.Value(1), child.Value(2), child.Value(3), child.Value(4));
+                }
+                was_defined[i] = true;
+                found_color = true;
+                break;
+            }
+        }
+        if (!found_color) {
+            child.PrintTrace("Unrecognized key: " + child.Token(0) + ". Skipping it.");    
+        }
+        
+    }
+
+    // Adjust everything's colors with the alpha value
+    for (uint i = 0; i < (sizeof(color_pointers) / sizeof(Color*)); ++i) 
+    {
+        *color_pointers[i] = color_pointers[i]->Transparent(color_pointers[i]->Get()[3]);
+    }
+
+
+
+    if (!was_defined[0]) // Close color 
+    {
+        node.PrintTrace("Warning: The attribute \"color\" was not specified for this custom link, gray was assumed.");
+    }
+    if (!was_defined[1]) // Far color
+    {
+        // Copy close color, but reduce alpha value
+        farColor = closeColor.Transparent(0.5);
+    }
+    if (!was_defined[3]) // Unusable far color
+    {
+        // Copy close color, but reduce alpha value
+        unusableFarColor = unusableCloseColor.Transparent(0.5);
     }
 }
 

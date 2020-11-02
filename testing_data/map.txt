@@ -1,0 +1,303 @@
+
+system "Kappa Star"
+	pos -100404 -100356
+	government Independent
+	habitable 425.92
+	belt 1786
+	link "Sigma Star"
+	link "Theta Star"
+	"custom link" System Kappa
+	asteroids "small rock" 63 1.155
+	asteroids "medium rock" 13 2.1945
+	asteroids "large rock" 35 1.9305
+	asteroids "small metal" 55 1.9305
+	asteroids "medium metal" 20 1.6995
+	asteroids "large metal" 71 0.9405
+	minables aluminum 13 2.00039
+	minables iron 44 2.38497
+	minables silver 13 2.29431
+	object
+		sprite star/k5
+		period 10
+	object
+		sprite planet/rock15
+		distance 128.01
+		period 28.0713
+	object "Kappa Planet"
+		sprite planet/ice6
+		distance 313.85
+		period 107.765
+	object
+		sprite planet/gas16
+		distance 1061.26
+		period 670.083
+	object
+		sprite planet/gas3
+		distance 2836.51
+		period 2928.01
+		object
+			sprite planet/dust5
+			distance 299
+			period 13.206
+		object
+			sprite planet/luna
+			distance 431
+			period 22.855
+
+system "Regular Star"
+	pos -100244 -100214
+	government Independent
+	habitable 233.28
+	belt 1540
+	link "Sigma Star"
+	link System
+	link "Theta Star"
+	asteroids "small rock" 6 1.1856
+	asteroids "medium rock" 25 2.1632
+	asteroids "large rock" 1 2.8704
+	asteroids "small metal" 1 1.144
+	asteroids "medium metal" 22 2.5168
+	asteroids "large metal" 1 3.0576
+	minables iron 3 2.46387
+	minables lead 5 3.82386
+	object
+		sprite star/m4
+		period 10
+	object
+		sprite planet/lava4
+		distance 247.81
+		period 102.164
+		object
+			sprite planet/io
+			distance 127
+			period 18.3575
+	object
+		sprite planet/rock10
+		distance 836.06
+		period 633.107
+		object "Regular Planet"
+			sprite planet/rock14
+			distance 174.352
+			period 19.3756
+			offset 227.671
+	object
+		sprite planet/uranus
+		distance 1497.57
+		period 1517.76
+		offset 0.335808
+	object
+		sprite planet/gas6
+		distance 2174.18
+		period 2655
+		offset 0.131774
+		object
+			sprite planet/dust4
+			distance 279
+			period 11.9034
+		object
+			sprite planet/dust0
+			distance 397
+			period 20.2046
+
+system "Sigma Star"
+	pos -100271 -100321
+	government Independent
+	habitable 425.92
+	belt 1966
+	"custom link" System Sigma
+	link "Kappa Star"
+	link "Regular Star"
+	asteroids "small rock" 1 1.21
+	asteroids "medium rock" 14 2.024
+	asteroids "large rock" 8 3.234
+	asteroids "small metal" 9 1.32
+	asteroids "medium metal" 34 2.31
+	asteroids "large metal" 3 1.518
+	minables lead 15 2.36704
+	minables tungsten 3 4.16738
+	object
+		sprite star/k5
+		period 10
+	object
+		sprite planet/desert0
+		distance 293.96
+		period 97.6851
+		object
+			sprite planet/rock17
+			distance 120
+			period 16.5247
+	object "Sigma Planet"
+		sprite planet/ice1
+		distance 598.57
+		period 283.837
+	object
+		sprite planet/fog0
+		distance 956.61
+		period 573.454
+	object
+		sprite planet/gas1
+		distance 2432.77
+		period 2325.67
+		object
+			sprite planet/europa
+			distance 222
+			period 13.2204
+		object
+			sprite planet/dust5
+			distance 348
+			period 25.9468
+
+system System
+	pos -100339 -100283.5
+	government Independent
+	habitable 2035
+	belt 1784
+	link "Regular Star"
+	asteroids "small rock" 4 0.988
+	asteroids "medium rock" 5 0.715
+	asteroids "large rock" 9 1.391
+	asteroids "small metal" 1 0.65
+	asteroids "medium metal" 76 1.625
+	asteroids "large metal" 1 1.027
+	"custom link" "Kappa Star" Kappa
+	"custom link" "Sigma Star" Sigma
+	"custom link" "Theta Star" Theta
+	object
+		sprite star/f5
+		distance 17.6118
+		period 10.5101
+	object
+		sprite star/m0
+		distance 94.3882
+		period 10.5101
+		offset 180
+	object Planet
+		sprite planet/rock3
+		distance 302.626
+		period 46.6807
+		offset 99.6457
+	object
+		sprite planet/lava1
+		distance 588.436
+		period 126.569
+		offset 19.5178
+	object
+		sprite planet/rock4
+		distance 1205.69
+		period 371.219
+		offset 3.24557
+		object
+			sprite planet/rock17
+			distance 180
+			period 21.9856
+	object
+		sprite planet/desert7
+		distance 1780.5
+		period 666.178
+		offset 1.2235
+	object
+		sprite planet/gas7
+		distance 2304.46
+		period 980.914
+		offset 0.641657
+		object
+			sprite planet/luna
+			distance 254
+			period 14.4006
+		object
+			sprite planet/dust4
+			distance 366
+			period 24.9088
+
+system "Theta Star"
+	pos -100396 -100257
+	government Independent
+	habitable 233.28
+	belt 1573
+	link "Kappa Star"
+	link "Regular Star"
+	"custom link" System Theta
+	asteroids "small rock" 2 1.2922
+	asteroids "medium rock" 72 1.6562
+	asteroids "large rock" 116 2.6208
+	asteroids "medium metal" 81 2.73
+	asteroids "large metal" 30 1.365
+	minables neodymium 4 3.32992
+	minables silver 41 4.52064
+	object
+		sprite star/m4
+		period 10
+	object
+		sprite planet/desert0
+		distance 210.24
+		period 79.8352
+	object
+		sprite planet/gas17
+		distance 658.2
+		period 442.24
+		object "Theta Planet"
+			sprite planet/luna
+			distance 211.668
+			period 13.157
+			offset 137.127
+	object
+		sprite planet/desert6
+		distance 1250.12
+		period 1157.57
+		offset 0.292481
+		object
+			sprite planet/rock7
+			distance 150
+			period 19.1409
+	object
+		sprite planet/gas2
+		distance 2340.73
+		period 2965.84
+		offset 0.0607185
+		object
+			sprite planet/io
+			distance 204
+			period 17.6547
+		object
+			sprite planet/europa
+			distance 294
+			period 30.5447
+		object
+			sprite planet/tethys
+			distance 399
+			period 48.2919
+		object
+			sprite planet/miranda
+			distance 540
+			period 76.0335
+
+planet "Kappa Planet"
+	description `This is a planet accesable by a special kind of drive`
+	spaceport `The spaceport is a spaceport`
+	shipyard "A Shipyard"
+	outfitter "Some Outfitter"
+
+planet Planet
+	description `This is a planet, you spawn here`
+	spaceport `The spaceport is a spaceport`
+	shipyard "A Shipyard"
+	outfitter "Some Outfitter"
+
+planet "Regular Planet"
+	description `This is a normal planet with a normal hyperlane leading to it`
+	spaceport `The spaceport is a spaceport`
+	shipyard "A Shipyard"
+	outfitter "Some Outfitter"
+
+planet "Sigma Planet"
+	description `This is a planet accesable by a special kind of drive`
+	spaceport `The spaceport is a spaceport`
+	shipyard "A Shipyard"
+	outfitter "Some Outfitter"
+
+planet "Theta Planet"
+	description `This is a planet accesable by a special kind of drive`
+	spaceport `The spaceport is a spaceport`
+	shipyard "A Shipyard"
+	outfitter "Some Outfitter"
+

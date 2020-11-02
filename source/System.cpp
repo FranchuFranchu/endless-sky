@@ -203,7 +203,7 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 			else
 				links.insert(GameData::Systems().Get(value));
 		}
-		else if(key == "customlink" && child.Size() >= 3)
+		else if(key == "custom link" && child.Size() >= 3)
 		{
 			// Make a custom link of type [second argument] and to [first argument]
 			CustomLink link;

@@ -1,0 +1,9 @@
+
+start
+	date 16 11 3013
+	system "System"
+	planet "Planet"
+	account
+		credits 33480000
+		score 400
+	set "license: Pilot's"

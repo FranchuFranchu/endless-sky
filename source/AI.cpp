@@ -1792,7 +1792,6 @@ void AI::PrepareForHyperspace(Ship &ship, Command &command)
 	{
 		direction = direction.Unit();
 		Point normal(-direction.Y(), direction.X());
-		std::cout << normal.X() << " " << normal.Y() << "\n";
 		double deviation = ship.Velocity().Dot(normal);
 		if(fabs(deviation) > scramThreshold)
 		{
@@ -1823,8 +1822,9 @@ void AI::PrepareForHyperspace(Ship &ship, Command &command)
 	else if(isJump)
 		Stop(ship, command, ship.Attributes().Get("jump speed"));
 	// Else stop in the fastest way to end facing in the right direction
-	else if(Stop(ship, command, ship.Attributes().Get("jump speed"), direction))
+	else if(Stop(ship, command, ship.Attributes().Get("jump speed"), direction)) {
 		command.SetTurn(TurnToward(ship, direction));
+	}
 }
 
 
@@ -3307,6 +3307,7 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player)
 	}
 	else if(keyDown.Has(Command::JUMP))
 	{
+		printf("%s %d %d\n", "Jump1", !ship.GetTargetSystem(), !isWormhole);
 		if(!ship.GetTargetSystem() && !isWormhole)
 		{
 			double bestMatch = -2.;
@@ -3452,7 +3453,6 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player)
 		}
 		else if(ship.CustomDriveFuel(ship.GetTargetSystem()))
 		{
-			Messages::Add("Jumping through custom link..");
 			PrepareForHyperspace(ship, command);
 			command |= Command::JUMP;
 			if(keyHeld.Has(Command::JUMP))

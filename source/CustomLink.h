@@ -53,6 +53,11 @@ class CustomLinkType
 		bool doHyperdriveMovement = false;
 		Color farColor = Color(0.5f, 1.f); // Link color when it is far away from the player
 		Color closeColor  = Color(1.f, 1.f); // Color when it is close to the player
+
+		// Same as above, but used when the player can't travel through the links. Can be used to create "secret" links.
+		Color unusableFarColor = Color(0.5f, 0.f);
+		Color unusableCloseColor = Color(1.f, 0.f);
+
 		std::string requirement; // Outfit needed to travel through this link
 };
 #endif // CUSTOMLINK_H

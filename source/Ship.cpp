@@ -2123,16 +2123,24 @@ bool Ship::IsReadyToJump(bool waitingIsReady) const
 {
 	// Ships can't jump while waiting for someone else, carried, or if already jumping.
 	if(IsDisabled() || (!waitingIsReady && commands.Has(Command::WAIT))
-			|| hyperspaceCount || !targetSystem || !currentSystem)
+			|| hyperspaceCount || !targetSystem || !currentSystem) 
+	{
 		return false;
+	}
 	
 	// Check if the target system is valid and there is enough fuel to jump.
 	double fuelCost = JumpFuel(targetSystem);
-	if(!fuelCost || fuel < fuelCost)
+	double customFuelCost = CustomDriveFuel(targetSystem);
+	if((!fuelCost || fuel < fuelCost) && (!customFuelCost || fuel < customFuelCost)) 
+	{
 		return false;
+	}
 	
 	Point direction = targetSystem->Position() - currentSystem->Position();
 	bool isJump = !attributes.Get("hyperdrive") || !currentSystem->Links().count(targetSystem);
+	isJump &= !(CanTravelThroughCustomLinks(currentSystem, targetSystem));
+
+
 	double scramThreshold = attributes.Get("scram drive");
 	
 	// The ship can only enter hyperspace if it is traveling slowly enough
@@ -2143,8 +2151,9 @@ bool Ship::IsReadyToJump(bool waitingIsReady) const
 		if(deviation > scramThreshold)
 			return false;
 	}
-	else if(velocity.Length() > attributes.Get("jump speed"))
+	else if(velocity.Length() > attributes.Get("jump speed")) {
 		return false;
+	}
 	
 	if(!isJump)
 	{
@@ -2156,7 +2165,6 @@ bool Ship::IsReadyToJump(bool waitingIsReady) const
 		if(left == stillLeft)
 			return false;
 	}
-	
 	return true;
 }
 
@@ -2436,7 +2444,6 @@ double Ship::JumpFuel(const System *destination) const
 
 	// Custom links have the highest priority
 	if (CustomDriveFuel(destination)) {
-		Messages::Add("Using custom drive fuel");
 		return CustomDriveFuel(destination);
 	}
 

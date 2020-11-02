@@ -1,0 +1,4 @@
+conversation "intro"
+	scene "scene/lobby"
+	`This is a test galaxy, by FranchuFranchu`
+	name
