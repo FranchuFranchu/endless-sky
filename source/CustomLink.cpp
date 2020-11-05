@@ -64,7 +64,7 @@ void CustomLinkType::Load(const DataNode &node) {
 
         // I have to do this to avoid using a goto
         bool found_color = false;
-        for (uint i = 0; i < (sizeof(color_names) / sizeof(string)); ++i) 
+        for (size_t i = 0; i < (sizeof(color_names) / sizeof(string)); ++i) 
         {
             bool is_far = i % 2;
             bool is_unusable = i > 1;
@@ -95,7 +95,7 @@ void CustomLinkType::Load(const DataNode &node) {
     }
 
     // Adjust everything's colors with the alpha value
-    for (uint i = 0; i < (sizeof(color_pointers) / sizeof(Color*)); ++i) 
+    for (size_t i = 0; i < (sizeof(color_pointers) / sizeof(Color*)); ++i) 
     {
         *color_pointers[i] = color_pointers[i]->Transparent(color_pointers[i]->Get()[3]);
     }

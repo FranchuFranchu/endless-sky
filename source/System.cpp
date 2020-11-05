@@ -464,7 +464,7 @@ set<CustomLink> System::CustomLinksTo(const System * target) const
 // Check if a ship can jump to the target system using a custom link jump
 bool System::CustomLinkJumpable(const System * target, const Ship ship) const
 {
-	for(const CustomLink customLink : CustomLinksTo(target))
+	for(const CustomLink& customLink : CustomLinksTo(target))
 		if (customLink.CanTravel(ship))
 			return true;
 	return false;
@@ -474,7 +474,7 @@ bool System::CustomLinkJumpable(const System * target, const Ship ship) const
 // Function above, but overloaded with outfits
 bool System::CustomLinkJumpable(const System * target, const Outfit outfit) const
 {
-	for(const CustomLink customLink : CustomLinksTo(target))
+	for(const CustomLink& customLink : CustomLinksTo(target))
 		if (customLink.CanTravel(outfit))
 			return true;
 	return false;

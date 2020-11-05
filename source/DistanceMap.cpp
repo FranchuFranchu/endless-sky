@@ -269,7 +269,7 @@ bool DistanceMap::Propagate(Edge edge, bool useJump)
 			return false;
 	}
 	// Check if system is jumpable through custom links
-	for(const CustomLink customLink : (edge.next->CustomLinks()))
+	for(const CustomLink& customLink : (edge.next->CustomLinks()))
 	{
 		// Hyperlink types don't matter if the player is buying a local map
 		if (!isOnOutfitter)

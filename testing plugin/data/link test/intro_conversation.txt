@@ -1,4 +1,4 @@
 conversation "intro"
 	scene "scene/lobby"
-	`This is a test galaxy, by FranchuFranchu`
+	`This is a test galaxy`
 	name

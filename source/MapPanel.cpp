@@ -239,7 +239,7 @@ void MapPanel::DrawMiniMap(const PlayerInfo &player, float alpha, const System *
 		RingShader::Draw(from, OUTER, INNER, color);
 		
 		// Draw custom links
-		for(const CustomLink customLink : (system->CustomLinks()))
+		for(const CustomLink& customLink : (system->CustomLinks()))
 		{
 			Color linkColor;
 
@@ -858,8 +858,7 @@ void MapPanel::UpdateCache()
 
 				const CustomLinkType * linkTypeData = GameData::CustomLinkTypes().Get(customlink.linkType);
 				bool canTravel = linkTypeData->CanTravel(*player.Flagship());
-				printf("%d\n", canTravel);
-
+				
 
 				links.emplace_back(system->Position(), link->Position(), 
 					// This ternary is evil
@@ -915,7 +914,8 @@ void MapPanel::DrawTravelPlan()
 	{
 		const System *next = player.TravelPlan()[i];
 		bool isHyper = previous->Links().count(next);
-		bool isJump = !isHyper && previous->Neighbors().count(next);
+		bool isCustom = player.Flagship()->CanTravelThroughCustomLinks(previous, next);
+		bool isJump = !isCustom && !isHyper && previous->Neighbors().count(next);
 		bool isWormhole = false;
 		for(const StellarObject &object : previous->Objects())
 			isWormhole |= (object.GetPlanet() && player.HasVisited(object.GetPlanet())
@@ -947,6 +947,8 @@ void MapPanel::DrawTravelPlan()
 		Color drawColor = outOfFlagshipFuelRangeColor;
 		if(isWormhole)
 			drawColor = wormholeColor;
+		else if (isCustom && fuel[flagship] >= 0.)
+			drawColor = defaultColor;
 		else if(!stranded)
 			drawColor = withinFleetFuelRangeColor;
 		else if(fuel[flagship] >= 0.)

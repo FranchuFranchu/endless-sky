@@ -3307,7 +3307,6 @@ void AI::MovePlayer(Ship &ship, const PlayerInfo &player)
 	}
 	else if(keyDown.Has(Command::JUMP))
 	{
-		printf("%s %d %d\n", "Jump1", !ship.GetTargetSystem(), !isWormhole);
 		if(!ship.GetTargetSystem() && !isWormhole)
 		{
 			double bestMatch = -2.;

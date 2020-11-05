@@ -181,7 +181,7 @@ void LocationFilter::Save(DataWriter &out) const
 			out.BeginChild();
 			{
 				for(const Government *government : governments)
-					out.Write(government->GetTrueName());
+					out.Write(government->GetName());
 			}
 			out.EndChild();
 		}

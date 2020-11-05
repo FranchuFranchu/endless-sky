@@ -2514,8 +2514,8 @@ double Ship::JumpFuelMissing() const
 
 bool Ship::CanTravelThroughCustomLinks(const System * source, const System * destination) const
 {
-	for(const CustomLink customlink : source->CustomLinksTo(destination)) {
-        const CustomLinkType* linkType = GameData::CustomLinkTypes().Get(customlink.linkType);
+	for(const CustomLink& customLink : source->CustomLinksTo(destination)) {
+        const CustomLinkType* linkType = GameData::CustomLinkTypes().Get(customLink.linkType);
         if(linkType->CanTravel(*this)) {
         	return true;
         }
