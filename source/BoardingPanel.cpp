@@ -336,7 +336,20 @@ bool BoardingPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command,
 			
 			// To speed things up, have multiple rounds of combat each time you
 			// click the button, if you started with a lot of crew.
-			int rounds = max(1, yourStartCrew / 5);
+			double rounds = yourStartCrew / 5;
+
+			// Shift divides the round count by 5
+			// Control divides the round count by 20
+			// Alt makes it so that the round count is always 1
+			if(mod & KMOD_SHIFT)
+				rounds /= 5;
+			if(mod & KMOD_CTRL)
+				rounds /= 20;
+			if(mod & KMOD_ALT)
+				rounds = 1;
+
+			rounds = max(1, static_cast<int>(rounds));
+			
 			for(int round = 0; round < rounds; ++round)
 			{
 				int yourCrew = you->Crew();
