@@ -36,6 +36,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <iostream>
 #include <set>
 
 using namespace std;
@@ -581,6 +582,15 @@ void AI::Step(const PlayerInfo &player, Command &activeCommands)
 			}
 			if(isCloaking)
 				command |= Command::CLOAK;
+
+			if (it.get() != player.Flagship() && player.Flagship()->GetGovernment() == it->GetGovernment() && player.Flagship()->GetTargetAsteroid())
+			{
+				const shared_ptr<Minable> &minable = player.Flagship()->GetTargetAsteroid();
+				it->SetTargetAsteroid(minable);
+				MoveToAttack(*it, command, *minable);
+				AutoFire(*it, command, *minable);
+				it->SetCommands(command);
+			}
 		}
 		// Cloak if the AI considers it appropriate.
 		else if(DoCloak(*it, command))
