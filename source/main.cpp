@@ -24,6 +24,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "FrameTimer.h"
 #include "GameData.h"
 #include "GameWindow.h"
+#include "LuaUtil.h"
 #include "MenuPanel.h"
 #include "Panel.h"
 #include "PlayerInfo.h"
@@ -69,6 +70,8 @@ int main(int argc, char *argv[])
 	bool debugMode = false;
 	bool loadOnly = false;
 	string testToRunName = "";
+	
+	LuaUtil::Initialize();
 
 	for(const char *const *it = argv + 1; *it; ++it)
 	{

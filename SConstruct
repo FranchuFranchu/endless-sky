@@ -81,6 +81,7 @@ game_libs = [
 	"GLEW",
 	"openal",
 	"pthread",
+	"lua5.3",
 ]
 env.Append(LIBS = game_libs)
 
