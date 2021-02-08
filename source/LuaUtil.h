@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 
+
 namespace LuaUtil {
 	
 	extern lua_State *L;
@@ -16,7 +17,7 @@ namespace LuaUtil {
 	int CFunction_index(lua_State *L);
 	
 	void ObjectToLua(void *pointer, std::vector<size_t> type);
-	void *LuaToObject(int index, size_t type);	
+	void LuaToObject(void *pointer, std::vector<size_t> type);
 	
 	class ClassDefinition
 	{
@@ -36,6 +37,29 @@ namespace LuaUtil {
 		
 		std::map<std::string, LuaUtil::MapAttributeInstance> propertyMapManagers;
 	};
+	
+	extern std::map<size_t, ClassDefinition> definitions;
 } // LuaUtil
+
+
+class Test2
+{
+public:
+	Test2() = default;
+	
+	~Test2() = default;
+	
+	static void Initialize()
+	{
+		
+		LuaUtil::definitions[typeid(Test2).hash_code()] = LuaUtil::ClassDefinition();
+		LuaUtil::definitions[typeid(Test2).hash_code()]
+			.property("attribute_one", &Test2::attributeOne)
+			.property("attribute_two", &Test2::attributeTwo)
+			.save<Test2>("esky.Test");
+	};
+	int attributeOne = 0;
+	std::map<int, int> attributeTwo;
+};
 
 #endif // LUA_UTIL_H_

@@ -51,7 +51,7 @@ if env["mode"] != "debug":
 	flags += ["-O3", "-flto"]
 	env.Append(LINKFLAGS = ["-O3", "-flto"])
 if env["mode"] == "debug":
-	flags += ["-g"]
+	flags += ["-g", "-O0"]
 elif env["mode"] == "profile":
 	flags += ["-pg"]
 	env.Append(LINKFLAGS = ["-pg"])

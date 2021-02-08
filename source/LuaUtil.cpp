@@ -3,26 +3,12 @@
 
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <typeinfo>
 
 using namespace LuaUtil;
 using namespace std;
-
-class Test
-{
-public:
-	Test() = default;
-	~Test() = default;
-	static void Initialize()
-	{
-		(*new ClassDefinition())
-			.property("attribute_one", &Test::attributeOne)
-			.save<Test>("esky.Test");
-	};
-	int attributeOne;
-	char s[48];
-	//map<int, int> attributeTwo;
-};
+ 
 
 // Hacky trick to get the offset of a poniter-to-member
 template<class T, typename U>
@@ -34,38 +20,34 @@ ptrdiff_t memberOffset(U T::* member)
 }
 
 lua_State *LuaUtil::L = luaL_newstate();
+std::map<size_t, ClassDefinition> LuaUtil::definitions;
 void LuaUtil::Initialize()
 {
 	luaL_openlibs(L);
-	Test::Initialize();
-	
-	Test test = Test();
-	test.attributeOne = 32;
-	strncpy(test.s, "Lorem ipsum dolor sit amet, consectetur adipisc", 48);
-	
-	cout << test.s << endl;
-	
+	Test2::Initialize();
+	Test2 test = Test2();
+	test.attributeOne = 5;	
+	test.attributeTwo[4] = 1;
 	ClassObjectToLua("esky.Test", &test);
 	lua_setglobal(L, "thing");
 	
-	int error = luaL_loadstring(L, "print(thing.attribute_one)")
+	int error = luaL_loadstring(L, "print(thing.attribute_two[4])")
 		|| lua_pcall(L, 0, 0, 0);
-	
 	
 	if(error)
 	{
 		cerr << "Lua error: " << lua_tostring(L, -1) << endl;
 		lua_pop(L, 1);
 	}
-	
-	cout << test.s << endl;
 }
 
 
 
 void LuaUtil::ClassObjectToLua(string name, void *object)
 {
-	*reinterpret_cast<void**>(lua_newuserdata(L, sizeof(void**))) = object;
+	void **ptr = reinterpret_cast<void**>(lua_newuserdata(L, 10));
+	cout << hex << ptr << hex << endl;
+	*ptr = object;
 	
 	lua_pushstring(L, name.c_str());
 	lua_gettable(L, LUA_REGISTRYINDEX);	
@@ -95,8 +77,9 @@ int LuaUtil::CFunction_index(lua_State *L)
 	void *attributeObject = reinterpret_cast<void*>(reinterpret_cast<char*>(*object)+difference);
 	if (typeid(map<bool, bool>).hash_code() == objectType.front())
 	{
-		auto t = definition.propertyMapManagers.at(propertyName);
+		const MapAttributeInstance &t = definition.propertyMapManagers.at(propertyName);
 		t.CreateUserdata(L, attributeObject);
+		printf("%s\n", "Pushed userdata");
 		return 1;
 	}
 	else
@@ -125,10 +108,13 @@ ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::map<K
 	propertyTypes[name] = vector<size_t>{typeid(map<bool, bool>).hash_code(), typeid(KeyType).hash_code(), typeid(ValueType).hash_code()};
 	propertyMapManagers[name] = MapAttributeInstance(
 		// Get function
-		[](void *mapPointer) {
-			lua_pop(L, 1);
-			lua_pushstring(L, "Hello, world!");
-		},
+		function<void(void*)>([](void *mapPointer) {
+			map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
+			KeyType key;
+			LuaUtil::LuaToObject(&key,   {typeid(KeyType).hash_code()});
+			ValueType value = mapData[key];
+			LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
+		}),
 		nullptr,
 		nullptr
 	);
@@ -146,8 +132,8 @@ void LuaUtil::ClassDefinition::save(string name)
 	lua_pushstring(L, name.c_str());
 	lua_settable(L, -3);
 	
-	// Copy ourselves to a new userdata object and push it to the stack
-	// Copying the map<> means that this class shouldn't be edited after this is done
+	// Store a pointer to ourselves
+	// This class should never go out of scope
 	lua_pushstring(L, "class_definition");
 	ClassDefinition **ptr = reinterpret_cast<ClassDefinition**>(lua_newuserdata(L, sizeof(this)));
 	*ptr = this;
