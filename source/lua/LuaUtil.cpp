@@ -1,5 +1,4 @@
 #include "LuaUtil.h"
-#include "LuaUtilStandardTypes.h"
 
 #include <cstring>
 #include <iostream>
@@ -10,13 +9,17 @@ using namespace LuaUtil;
 using namespace std;
  
 
-// Hacky trick to get the offset of a poniter-to-member
-template<class T, typename U>
-ptrdiff_t memberOffset(U T::* member)
-{
-    return reinterpret_cast<ptrdiff_t>(
-        &(reinterpret_cast<T const volatile*>(NULL)->*member)
-    );
+#include "LuaCppConversion.h"
+
+namespace {
+	// Hacky trick to get the offset of a poniter-to-member
+	template<class T, typename U>
+	ptrdiff_t memberOffset(U T::* member)
+	{
+		return reinterpret_cast<ptrdiff_t>(
+			&(reinterpret_cast<T const volatile*>(NULL)->*member)
+		);
+	}
 }
 
 lua_State *LuaUtil::L = luaL_newstate();
@@ -151,4 +154,3 @@ void LuaUtil::ClassDefinition::save(string name)
 	lua_settable(L, LUA_REGISTRYINDEX);
 }
 
-#include "LuaUtilTypeConversion.h"

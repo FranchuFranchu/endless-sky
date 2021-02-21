@@ -8,6 +8,7 @@
 
 #include "LuaHeaders.h"
 
+// This adds support for accessing STL objects (map<>, vector<>, etc.) from Lua
 namespace LuaUtil
 {
 	class MapAttributeInstance

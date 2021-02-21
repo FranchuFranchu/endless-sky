@@ -24,7 +24,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "FrameTimer.h"
 #include "GameData.h"
 #include "GameWindow.h"
-#include "LuaUtil.h"
+#include "lua/LuaUtil.h"
 #include "MenuPanel.h"
 #include "Panel.h"
 #include "PlayerInfo.h"

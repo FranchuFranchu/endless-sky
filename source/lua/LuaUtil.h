@@ -2,7 +2,7 @@
 #define LUA_UTIL_H_
 
 #include "LuaHeaders.h"
-#include "LuaUtilStandardTypes.h"
+#include "STLAttributes.h"
 
 #include <map>
 #include <vector>
