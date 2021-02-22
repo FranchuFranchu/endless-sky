@@ -1,3 +1,7 @@
+// Copyright (C) 2021 by FranchuFranchu <fff999abc999@gmail.com>
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 #include "LuaUtil.h"
 
 #include <cstring>
@@ -34,7 +38,7 @@ void LuaUtil::Initialize()
 	ClassObjectToLua("esky.Test", &test);
 	lua_setglobal(L, "thing");
 	
-	int error = luaL_loadstring(L, "print(thing.attribute_two[4])")
+	int error = luaL_loadstring(L, "thing.attribute_two[4] = 2\nprint(thing.attribute_two[4])")
 		|| lua_pcall(L, 0, 0, 0);
 	
 	if(error)
@@ -42,6 +46,8 @@ void LuaUtil::Initialize()
 		cerr << "Lua error: " << lua_tostring(L, -1) << endl;
 		lua_pop(L, 1);
 	}
+	
+	printf("%d", test.attributeTwo[4]);
 }
 
 
@@ -111,14 +117,23 @@ ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::map<K
 	propertyTypes[name] = vector<size_t>{typeid(map<bool, bool>).hash_code(), typeid(KeyType).hash_code(), typeid(ValueType).hash_code()};
 	propertyMapManagers[name] = MapAttributeInstance(
 		// Get function
-		function<void(void*)>([](void *mapPointer) {
+		[](void *mapPointer) {
 			map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
 			KeyType key;
 			LuaUtil::LuaToObject(&key,   {typeid(KeyType).hash_code()});
 			ValueType value = mapData[key];
 			LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
-		}),
-		nullptr,
+		},
+		// Set function
+		[](void *mapPointer) {
+			map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
+			KeyType key;
+			ValueType value;
+			LuaUtil::LuaToObject(&value, {typeid(ValueType).hash_code()});
+			LuaUtil::LuaToObject(&key,   {typeid(KeyType  ).hash_code()});
+			
+			mapData[key] = value;
+		},
 		nullptr
 	);
 	return *this;
