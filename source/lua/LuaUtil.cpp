@@ -38,7 +38,7 @@ void LuaUtil::Initialize()
 	ClassObjectToLua("esky.Test", &test);
 	lua_setglobal(L, "thing");
 	
-	int error = luaL_loadstring(L, "thing.attribute_two[4] = 2\nprint(thing.attribute_two[4])")
+	int error = luaL_loadstring(L, "thing.attribute_three[1] = 2\nprint(thing.attribute_three[1])")
 		|| lua_pcall(L, 0, 0, 0);
 	
 	if(error)
@@ -88,7 +88,12 @@ int LuaUtil::CFunction_index(lua_State *L)
 	{
 		const MapAttributeInstance &t = definition.propertyMapManagers.at(propertyName);
 		t.CreateUserdata(L, attributeObject);
-		printf("%s\n", "Pushed userdata");
+		return 1;
+	}
+	else if (typeid(vector<bool>).hash_code() == objectType.front())
+	{
+		const VectorAttributeInstance &t = definition.propertyVectorManagers.at(propertyName);
+		t.CreateUserdata(L, attributeObject);
 		return 1;
 	}
 	else
@@ -110,6 +115,53 @@ ClassDefinition& LuaUtil::ClassDefinition::property(string name, AttributeType R
 	return *this;
 }
 
+template <typename RootType, typename ValueType>
+ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::vector<ValueType> RootType::* memberPointer)
+{
+	propertyOffsets[name] = memberOffset(memberPointer);
+	propertyTypes[name] = vector<size_t>{typeid(vector<bool>).hash_code(), typeid(ValueType).hash_code()};
+	propertyVectorManagers[name] = VectorAttributeInstance(
+		// Get function
+		[](void *vectorPointer) {
+			vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
+			size_t key;
+			LuaUtil::LuaToObject(&key,   {typeid(size_t ).hash_code()});
+			key -= 1;
+			if (key >= vectorData.size())
+			{
+				lua_pushstring(L, string("Index " + to_string(key + 1) + " out of range").c_str());
+				lua_error(L);
+			}
+			
+			ValueType value = vectorData[key];
+			LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
+		},
+		// Set function
+		[name](void *vectorPointer) {
+			vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
+			size_t key;
+			ValueType value;
+			LuaUtil::LuaToObject(&value, {typeid(ValueType).hash_code()});
+			LuaUtil::LuaToObject(&key,   {typeid(size_t ).hash_code()});
+			key -= 1;
+			if ((key - vectorData.size()) > 1)
+			{
+				lua_pushstring(L, string("Index " + to_string(key + 1) + " out of range").c_str());
+				lua_error(L);
+			}
+			else if (key == vectorData.size())
+			{
+				vectorData.push_back(value);
+			}
+			else 
+				vectorData[key] = value;
+		},
+		nullptr
+	);
+	return *this;
+	
+}
+		
 template <typename RootType, typename KeyType, typename ValueType>
 ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::map<KeyType, ValueType> RootType::* memberPointer)
 {

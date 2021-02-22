@@ -6,7 +6,8 @@
 #define LUA_UTIL_H_
 
 #include "LuaHeaders.h"
-#include "STLAttributes.h"
+#include "stl/Map.h"
+#include "stl/Vector.h"
 
 #include <map>
 #include <vector>
@@ -29,8 +30,12 @@ namespace LuaUtil {
 		template <typename RootType, typename AttributeType>
 		ClassDefinition& property(std::string name, AttributeType RootType::* memberPointer);
 		
+		template <typename RootType, typename ValueType>
+		ClassDefinition& property(std::string name, std::vector<ValueType> RootType::* memberPointer);
+		
 		template <typename RootType, typename KeyType, typename ValueType>
 		ClassDefinition& property(std::string name, std::map<KeyType, ValueType> RootType::* memberPointer);
+		
 		
 		template <typename RootType>
 		void save(std::string name);
@@ -40,6 +45,7 @@ namespace LuaUtil {
 		std::map<std::string, std::vector<size_t>> propertyTypes;
 		
 		std::map<std::string, LuaUtil::MapAttributeInstance> propertyMapManagers;
+		std::map<std::string, LuaUtil::VectorAttributeInstance> propertyVectorManagers;
 	};
 	
 	extern std::map<size_t, ClassDefinition> definitions;
@@ -60,10 +66,12 @@ public:
 		LuaUtil::definitions[typeid(Test2).hash_code()]
 			.property("attribute_one", &Test2::attributeOne)
 			.property("attribute_two", &Test2::attributeTwo)
+			.property("attribute_three", &Test2::attributeThree)
 			.save<Test2>("esky.Test");
 	};
 	int attributeOne = 0;
 	std::map<int, int> attributeTwo;
+	std::vector<int> attributeThree;
 };
 
 #endif // LUA_UTIL_H_
