@@ -32,6 +32,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Screen.h"
 #include "SpriteSet.h"
 #include "SpriteShader.h"
+#include "System.h"
 #include "Test.h"
 #include "UI.h"
 
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
 	string testToRunName = "";
 	
 	LuaUtil::Initialize();
+	System::InitializeLua();
 
 	for(const char *const *it = argv + 1; *it; ++it)
 	{

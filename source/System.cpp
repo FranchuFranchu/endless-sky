@@ -19,6 +19,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "GameData.h"
 #include "Government.h"
 #include "Hazard.h"
+#include "lua/LuaUtil.h"
 #include "Minable.h"
 #include "Planet.h"
 #include "Random.h"
@@ -124,6 +125,16 @@ const Hazard *System::HazardProbability::Get() const
 int System::HazardProbability::Period() const
 {
 	return period;
+}
+
+
+
+void System::InitializeLua()
+{
+	LuaUtil::definitions[typeid(System).hash_code()] = LuaUtil::ClassDefinition();
+	LuaUtil::definitions[typeid(System).hash_code()]
+		.property("attribute_one", &System::habitable)
+		.save<System>("esky.System");
 }
 
 

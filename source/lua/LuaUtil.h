@@ -12,6 +12,18 @@
 #include <map>
 #include <vector>
 
+using namespace std;
+
+namespace {
+	// Hacky trick to get the offset of a poniter-to-member
+	template<class T, typename U>
+	ptrdiff_t memberOffset(U T::* member)
+	{
+		return reinterpret_cast<ptrdiff_t>(
+			&(reinterpret_cast<T const volatile*>(NULL)->*member)
+		);
+	}
+}
 
 namespace LuaUtil {
 	
@@ -28,13 +40,13 @@ namespace LuaUtil {
 	{
 	public:
 		template <typename RootType, typename AttributeType>
-		ClassDefinition& property(std::string name, AttributeType RootType::* memberPointer);
+		LuaUtil::ClassDefinition& property(std::string name, AttributeType RootType::* memberPointer);
 		
 		template <typename RootType, typename ValueType>
-		ClassDefinition& property(std::string name, std::vector<ValueType> RootType::* memberPointer);
+		LuaUtil::ClassDefinition& property(std::string name, std::vector<ValueType> RootType::* memberPointer);
 		
 		template <typename RootType, typename KeyType, typename ValueType>
-		ClassDefinition& property(std::string name, std::map<KeyType, ValueType> RootType::* memberPointer);
+		LuaUtil::ClassDefinition& property(std::string name, std::map<KeyType, ValueType> RootType::* memberPointer);
 		
 		
 		template <typename RootType>
@@ -73,5 +85,121 @@ public:
 	std::map<int, int> attributeTwo;
 	std::vector<int> attributeThree;
 };
+
+template <typename RootType, typename AttributeType>
+LuaUtil::ClassDefinition& LuaUtil::ClassDefinition::property(string name, AttributeType RootType::* memberPointer)
+{
+	propertyOffsets[name] = memberOffset(memberPointer);
+	propertyTypes[name] = vector<size_t>{typeid(AttributeType).hash_code()};
+	return *this;
+}
+
+template <typename RootType, typename ValueType>
+LuaUtil::ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::vector<ValueType> RootType::* memberPointer)
+{
+	propertyOffsets[name] = memberOffset(memberPointer);
+	propertyTypes[name] = vector<size_t>{typeid(vector<bool>).hash_code(), typeid(ValueType).hash_code()};
+	propertyVectorManagers[name] = VectorAttributeInstance(
+		// Get function
+		[](void *vectorPointer) {
+			vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
+			size_t key;
+			LuaUtil::LuaToObject(&key,   {typeid(size_t ).hash_code()});
+			key -= 1;
+			if (key >= vectorData.size())
+			{
+				lua_pushstring(L, string("Index " + to_string(key + 1) + " out of range").c_str());
+				lua_error(L);
+			}
+			
+			ValueType value = vectorData[key];
+			LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
+		},
+		// Set function
+		[name](void *vectorPointer) {
+			vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
+			size_t key;
+			ValueType value;
+			LuaUtil::LuaToObject(&value, {typeid(ValueType).hash_code()});
+			LuaUtil::LuaToObject(&key,   {typeid(size_t ).hash_code()});
+			key -= 1;
+			if ((key - vectorData.size()) > 1)
+			{
+				lua_pushstring(L, string("Index " + to_string(key + 1) + " out of range").c_str());
+				lua_error(L);
+			}
+			else if (key == vectorData.size())
+			{
+				vectorData.push_back(value);
+			}
+			else 
+				vectorData[key] = value;
+		},
+		nullptr
+	);
+	return *this;
+	
+}
+		
+template <typename RootType, typename KeyType, typename ValueType>
+LuaUtil::ClassDefinition& LuaUtil::ClassDefinition::property(std::string name, std::map<KeyType, ValueType> RootType::* memberPointer)
+{
+	propertyOffsets[name] = memberOffset(memberPointer);
+	propertyTypes[name] = vector<size_t>{typeid(map<bool, bool>).hash_code(), typeid(KeyType).hash_code(), typeid(ValueType).hash_code()};
+	propertyMapManagers[name] = MapAttributeInstance(
+		// Get function
+		[](void *mapPointer) {
+			map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
+			KeyType key;
+			LuaUtil::LuaToObject(&key,   {typeid(KeyType).hash_code()});
+			ValueType value = mapData[key];
+			LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
+		},
+		// Set function
+		[](void *mapPointer) {
+			map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
+			KeyType key;
+			ValueType value;
+			LuaUtil::LuaToObject(&value, {typeid(ValueType).hash_code()});
+			LuaUtil::LuaToObject(&key,   {typeid(KeyType  ).hash_code()});
+			
+			mapData[key] = value;
+		},
+		nullptr
+	);
+	return *this;
+}
+		
+
+template <typename RootType>
+void LuaUtil::ClassDefinition::save(string name)
+{
+	// The metatable
+	lua_newtable(L);
+	
+	lua_pushstring(L, "__name");
+	lua_pushstring(L, name.c_str());
+	lua_settable(L, -3);
+	
+	// Store a pointer to ourselves
+	// This class should never go out of scope
+	lua_pushstring(L, "class_definition");
+	ClassDefinition **ptr = reinterpret_cast<ClassDefinition**>(lua_newuserdata(L, sizeof(this)));
+	*ptr = this;
+	lua_settable(L, -3);
+	
+	// Create the __index metamethod
+	lua_pushstring(L, "__index");
+	lua_pushvalue(L, -2); 
+	lua_pushcclosure(L, &LuaUtil::CFunction_index, 1);
+	lua_settable(L, -3);
+	
+	// This is equivalent to REGISTRY[index] = stack[-2] (which is the metatable we created)
+	lua_pushstring(L, name.c_str());
+	lua_pushvalue(L, -2); 
+	lua_settable(L, LUA_REGISTRYINDEX);
+}
+
+
 
 #endif // LUA_UTIL_H_

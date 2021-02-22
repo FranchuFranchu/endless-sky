@@ -33,6 +33,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "ImageSet.h"
 #include "Interface.h"
 #include "LineShader.h"
+#include "lua/LuaUtil.h"
 #include "Minable.h"
 #include "Mission.h"
 #include "Music.h"
@@ -216,6 +217,11 @@ bool GameData::BeginLoad(const char * const *argv)
 		vector<string> dataFiles = Files::RecursiveList(source + "data/");
 		for(const string &path : dataFiles)
 			LoadFile(path, debugMode);
+		
+		// Same as above, but for Lua scripts
+		vector<string> scripts = Files::RecursiveList(source + "scripts/");
+		for(const string &path : scripts)
+			LoadScript(path);
 	}
 	
 	// Now that all data is loaded, update the neighbor lists and other
@@ -1122,6 +1128,17 @@ void GameData::LoadFile(const string &path, bool debugMode)
 		}
 		else
 			node.PrintTrace("Skipping unrecognized root object:");
+	}
+}
+
+
+
+void GameData::LoadScript(const string &path)
+{
+	int error = luaL_dofile(LuaUtil::L, path.c_str());
+	if (error)
+	{
+		Files::LogError("Lua error while loading file " + path + ": " + lua_tostring(LuaUtil::L, -1));
 	}
 }
 

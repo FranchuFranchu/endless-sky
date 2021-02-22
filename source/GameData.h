@@ -151,6 +151,8 @@ public:
 private:
 	static void LoadSources();
 	static void LoadFile(const std::string &path, bool debugMode);
+	static void LoadScript(const std::string &path);
+	
 	static std::map<std::string, std::shared_ptr<ImageSet>> FindImages();
 	
 	static void PrintShipTable();

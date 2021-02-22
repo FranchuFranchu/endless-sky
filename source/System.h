@@ -85,6 +85,8 @@ public:
 	
 	
 public:
+	static void InitializeLua();
+	
 	// Load a system's description.
 	void Load(const DataNode &node, Set<Planet> &planets);
 	// Update any information about the system that may have changed due to events,
