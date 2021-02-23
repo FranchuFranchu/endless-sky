@@ -24,6 +24,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 template<class Type>
 class Set {
 public:
+	typedef Type value_type;
 	// Allow non-const access to the owner of this set; it can hand off only
 	// const references to avoid anyone else modifying the objects.
 	Type *Get(const std::string &name) { return &data[name]; }

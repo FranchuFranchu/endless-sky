@@ -218,6 +218,8 @@ bool GameData::BeginLoad(const char * const *argv)
 		for(const string &path : dataFiles)
 			LoadFile(path, debugMode);
 		
+		InitializeLua();
+		
 		// Same as above, but for Lua scripts
 		vector<string> scripts = Files::RecursiveList(source + "scripts/");
 		for(const string &path : scripts)
@@ -967,6 +969,18 @@ const map<string, string> &GameData::HelpTemplates()
 const map<string, string> &GameData::PluginAboutText()
 {
 	return plugins;
+}
+
+
+
+void GameData::InitializeLua()
+{
+	LuaUtil::AddDefinition<GameData>()
+		.staticProperty("planets", &planets)
+		.staticProperty("systems", &systems)
+		.save<GameData>("esky.GameData");
+	LuaUtil::PushStatic("esky.GameData");
+	lua_setglobal(LuaUtil::L, "endless_sky");
 }
 
 

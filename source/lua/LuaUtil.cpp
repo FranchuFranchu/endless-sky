@@ -24,7 +24,7 @@ void LuaUtil::Initialize()
 	Test2 test = Test2();
 	test.attributeOne = 5;	
 	test.attributeTwo[4] = 1;
-	ClassObjectToLua("esky.Test", &test);
+	PushInstance("esky.Test", &test);
 	lua_setglobal(L, "thing");
 	
 	int error = luaL_loadstring(L, "thing.attribute_three[1] = 2\nprint(thing.attribute_three[1])")
@@ -39,17 +39,29 @@ void LuaUtil::Initialize()
 
 
 
-void LuaUtil::ClassObjectToLua(string name, void *object)
+void LuaUtil::PushInstance(string registryName, const void *object)
 {
-	void **ptr = reinterpret_cast<void**>(lua_newuserdata(L, 10));
-	cout << hex << ptr << hex << endl;
+	// TODO saying that this is const is a lie, Lua may modify it at any moment
+	// We should consider making actually const objects in the future.
+	const void **ptr = reinterpret_cast<const void**>(lua_newuserdata(L, sizeof(void**)));
 	*ptr = object;
 	
-	lua_pushstring(L, name.c_str());
+	lua_pushstring(L, registryName.c_str());
 	lua_gettable(L, LUA_REGISTRYINDEX);	
 	lua_setmetatable(L, -2);
 }
 
+
+
+void LuaUtil::PushStatic(string registryName)
+{
+	void **ptr = reinterpret_cast<void**>(lua_newuserdata(L, sizeof(void**)));
+	*ptr = nullptr;
+	
+	lua_pushstring(L, registryName.c_str());
+	lua_gettable(L, LUA_REGISTRYINDEX);	
+	lua_setmetatable(L, -2);
+}
 
 
 
@@ -68,20 +80,44 @@ int LuaUtil::CFunction_index(lua_State *L)
 	// Pop the metatable (to balance the stack)
 	lua_pop(L, 1);
 	
-	ptrdiff_t difference = definition.propertyOffsets[propertyName];
 	vector<size_t> objectType = definition.propertyTypes[propertyName];
-	void *attributeObject = reinterpret_cast<void*>(reinterpret_cast<char*>(*object)+difference);
-	if (typeid(map<bool, bool>).hash_code() == objectType.front())
+	
+	void *attributeObject;
+	
+	const bool invokedOnObject = *object != nullptr;
+	
+	// If there's an entry in propertyOffsets and it was invoked on an object, then it's a non-static property
+	// If there's an entry in staticProperties, then it's a static property
+	// Else, error out.
+	if (invokedOnObject && definition.propertyOffsets.find(propertyName) != definition.propertyOffsets.end() )
+	{
+		ptrdiff_t difference = definition.propertyOffsets[propertyName];
+		attributeObject = reinterpret_cast<void*>(reinterpret_cast<char*>(*object)+difference);
+	}
+	else if (definition.staticProperties.find(propertyName) != definition.staticProperties.end())
+		attributeObject = definition.staticProperties[propertyName];
+	else if (!invokedOnObject && definition.propertyOffsets.find(propertyName) != definition.propertyOffsets.end())
+		luaL_error(L, "Attempt to access non-static property %s on static object!", propertyName.c_str());
+	else
+		luaL_error(L, "Property %s not found.", propertyName.c_str());
+	
+	if (typeid(map<bool, bool>).hash_code() == objectType.front() || typeid(Set<bool>).hash_code() == objectType.front())
 	{
 		const MapAttributeInstance &t = definition.propertyMapManagers.at(propertyName);
 		t.CreateUserdata(L, attributeObject);
 		return 1;
 	}
-	else if (typeid(vector<bool>).hash_code() == objectType.front())
+	else if (typeid(vector<bool>).hash_code() == objectType.front() )
 	{
 		const VectorAttributeInstance &t = definition.propertyVectorManagers.at(propertyName);
 		t.CreateUserdata(L, attributeObject);
 		return 1;
+	}
+	else if (typeid(set<bool>).hash_code() == objectType.front())
+	{
+		const SetAttributeInstance &t = definition.propertySetManagers.at(propertyName);
+		t.CreateUserdata(L, attributeObject);
+		return 1;	
 	}
 	else
 	{
@@ -91,4 +127,3 @@ int LuaUtil::CFunction_index(lua_State *L)
 	
 	return 1;
 }
-

@@ -147,6 +147,7 @@ public:
 	
 	static const std::map<std::string, std::string> &PluginAboutText();
 	
+	static void InitializeLua();
 	
 private:
 	static void LoadSources();

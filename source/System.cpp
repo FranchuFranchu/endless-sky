@@ -133,7 +133,8 @@ void System::InitializeLua()
 {
 	LuaUtil::definitions[typeid(System).hash_code()] = LuaUtil::ClassDefinition();
 	LuaUtil::definitions[typeid(System).hash_code()]
-		.property("attribute_one", &System::habitable)
+		.property("habitable", &System::habitable)
+		.property("attributes", &System::attributes)
 		.save<System>("esky.System");
 }
 

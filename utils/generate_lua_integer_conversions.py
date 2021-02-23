@@ -10,7 +10,7 @@ if (basicType == typeid({type}).hash_code())
 
 CPP_TO_LUA_FORMAT = """
 if (basicType == typeid({type}).hash_code())
-    lua_pushnumber(L, *reinterpret_cast<{type}*>(pointer));
+    lua_pushnumber(L, *reinterpret_cast<const {type}*>(pointer));
 """.lstrip('\n')
 
 def main():
