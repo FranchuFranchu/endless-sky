@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <typeinfo>
+#include <stdexcept>
 
 using namespace LuaUtil;
 using namespace std;
@@ -15,14 +16,118 @@ using namespace std;
 
 #include "LuaCppConversion.h"
 
+namespace {
+	// The unmodified CFunctions
+	lua_CFunction originalPairs = nullptr;
+	lua_CFunction originalIpairs = nullptr;
+	
+	
+	// We will override the default "pairs" and "ipairs" function to change their behaviour
+	// They will allow us to iterate over our own STL wrappers (i.e. vector, map, etc.)
+	int CFunction_pairs(lua_State *L)
+	{
+		if (!lua_isuserdata(L, 1))
+			return originalPairs(L);
+		
+		lua_pushvalue(L, 1);
+		
+		
+		lua_getmetatable(L, -1);
+		
+		// Note: For Lua 5.1, the name is stored differently.
+		lua_pushstring(L, "__name");
+		lua_gettable(L, -2);
+		if (!lua_isstring(L, -1))
+			// This userdata has no name.
+			luaL_error(L, "invalid argument #1 to pairs (table or named userdata expected, got nameless userdata)");
+		
+		string registryName(lua_tostring(L, -1));
+		
+		// Pop the metatable
+		lua_pop(L, 1);
+		// Pop the copied userdata
+		lua_pop(L, 1); 
+		
+		if (registryName == "LuaUtil.SetAttributeInstance")
+			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);/*
+		else if (registryName == "LuaUtil.MapAttributeInstance")
+			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);
+		else if (registryName == "LuaUtil.VectorAttributeInstance")
+			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);*/
+		
+		
+		return 0;	
+	}
+	
+	
+	
+	int CFunction_ipairs(lua_State *L)
+	{
+		if (!lua_isuserdata(L, 1))
+			return originalPairs(L);
+		return 0;
+	}
+	
+	
+	
+	int CFunction_table_call(lua_State *L)
+	{
+		cout << "Table call" << endl;
+		return 0;
+	}
+}
+
 lua_State *LuaUtil::L = luaL_newstate();
 std::map<size_t, ClassDefinition> LuaUtil::definitions;
 void LuaUtil::Initialize()
 {
 	luaL_openlibs(L);
+	
+	// Override the table(), pairs(), and ipairs() functions
+	lua_pushglobaltable(L);
+	
+	lua_getglobal(L, "pairs");
+	originalPairs = lua_tocfunction(L, -1);
+	lua_pop(L, 1);
+	
+	lua_getglobal(L, "ipairs");
+	originalIpairs = lua_tocfunction(L, -1);
+	lua_pop(L, 1);
+	
+	lua_pushcfunction(L, CFunction_pairs);
+	lua_setglobal(L, "pairs");
+	
+	lua_pushcfunction(L, CFunction_ipairs);
+	lua_setglobal(L, "ipairs");
+	
+	// This is the equialent of the following Lua code:
+	// getmetatable(table)._call = CFunction_table_call
+	lua_getglobal(L, "table");
+	// If there's no metatable yet, create it.
+	if (!lua_getmetatable(L, -1))
+	{
+		lua_newtable(L); 
+		// Shallow copy the metatable
+		lua_pushvalue(L, -1); 
+		lua_setmetatable(L, -3);
+	}
+	lua_pushstring(L, "__call");
+	lua_pushcfunction(L, CFunction_table_call);
+	lua_settable(L, -3);
+
+	lua_setmetatable(L, -2);
+
+	lua_pop(L, 1); // Pop the metatable
+	lua_pop(L, 1); // Pop the table
+	
+	if (!(originalPairs && originalIpairs))
+	{
+		throw runtime_error("Either pairs or ipairs were not cfunctions! (your version of the Lua library might be weird)");
+	}
+	
 	Test2::Initialize();
 	Test2 test = Test2();
-	test.attributeOne = 5;	
+	test.attributeOne = 5;
 	test.attributeTwo[4] = 1;
 	PushInstance("esky.Test", &test);
 	lua_setglobal(L, "thing");

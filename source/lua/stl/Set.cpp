@@ -12,8 +12,10 @@ LuaUtil::SetAttributeInstance::SetAttributeInstance(
 		std::function<void(void *setPointer)> add,
 		std::function<void(void *setPointer)> remove,
 		std::function<void(void *setPointer)> has,
-		std::function<void(void *setPointer)> list) :
-	add(add), remove(remove), has(has), list(list)
+		std::function<void(void *setPointer)> list,
+		std::function<int(void *setPointer)> pairs,
+		std::function<int(void *setPointer)> next ) :
+	add(add), remove(remove), has(has), list(list), pairs(pairs), next(next)
 {
 	
 }
@@ -52,10 +54,12 @@ void LuaUtil::SetAttributeInstance::CreateUserdata(lua_State *L, void *setPointe
 	lua_pushcclosure(L, &LuaUtil::SetAttributeInstance::CFunction_list, 1);
 	lua_settable(L, -3);
 	
-	
 	// metatable.__index = function_table
 	lua_settable(L, -3);
 	
+	lua_pushstring(L, "_pointer");
+	lua_pushlightuserdata(L, setPointer);
+	lua_settable(L, -3);
 	
 	lua_setmetatable(L, -2);
 	
@@ -65,12 +69,22 @@ namespace {
 	inline LuaUtil::SetAttributeInstance *getSetData(lua_State *L)
 	{
 		LuaUtil::SetAttributeInstance *setData = *reinterpret_cast<LuaUtil::SetAttributeInstance**>(luaL_checkudata(L, 1, "LuaUtil.SetAttributeInstance"));
-		luaL_checktype(L, lua_upvalueindex(1), LUA_TLIGHTUSERDATA);
 		return setData;
 	}
 	inline void *getSetPointer(lua_State *L)
 	{
 		void *setPointer = lua_touserdata(L, lua_upvalueindex(1));
+		luaL_checktype(L, lua_upvalueindex(1), LUA_TLIGHTUSERDATA);
+		return setPointer;
+	}
+	inline void *getSetPointerFromMetatable(lua_State *L)
+	{
+		lua_getmetatable(L, 1);
+		lua_pushstring(L, "_pointer");
+		lua_gettable(L, -2);
+		void *setPointer = lua_touserdata(L, -1);
+		// Pop the metatable
+		lua_pop(L, 1); 
 		return setPointer;
 	}
 }
@@ -102,3 +116,18 @@ int LuaUtil::SetAttributeInstance::CFunction_list(lua_State *L)
 	getSetData(L)->list(getSetPointer(L));
 	return 1;
 }
+
+
+
+int LuaUtil::SetAttributeInstance::CFunction_pairs(lua_State *L)
+{
+	return getSetData(L)->pairs(getSetPointerFromMetatable(L));
+}
+
+
+
+int LuaUtil::SetAttributeInstance::CFunction_next(lua_State *L)
+{
+	return getSetData(L)->next(getSetPointerFromMetatable(L));
+}
+		

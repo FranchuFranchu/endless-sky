@@ -28,6 +28,9 @@ namespace LuaUtil
 		static int CFunction_index(lua_State *L);
 		static int CFunction_newindex(lua_State *L);
 		
+		static int CFunction_pairs(lua_State *L);
+		static int CFunction_next(lua_State *L);
+		
 		void CreateUserdata(lua_State *L, void *mapPointer) const;
 	public:
 		std::function<void(void *mapPointer)> get;

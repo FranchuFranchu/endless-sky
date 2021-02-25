@@ -215,8 +215,9 @@ namespace LuaUtil {
 				nullptr,
 				// Remove function
 				nullptr,
-				// 
+				// Has function
 				nullptr,
+				// List function
 				[](void *setPointer)
 				{
 					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
@@ -229,6 +230,40 @@ namespace LuaUtil {
 						lua_settable(L, -3);
 						index++;
 					}
+				},
+				// Pairs function
+				[](void *setPointer) -> int
+				{
+					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
+					
+					
+					// The pairs() function returns 3 values
+					// 1: The iterator function
+					lua_pushcclosure(L, SetAttributeInstance::CFunction_next, 0);
+					// 2: The object to iterate on (which is this one)
+					lua_pushvalue(L, 1);
+					// 3: The starting argument for next()
+					*reinterpret_cast<typename set<KeyType>::iterator*>(lua_newuserdata(L, sizeof(setData.begin()))) = setData.begin();
+					
+					return 3;
+				},
+				// Next function
+				[](void *setPointer) -> int
+				{
+					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
+					typename set<KeyType>::iterator *it = reinterpret_cast<typename set<KeyType>::iterator*>(lua_touserdata(L, 2));
+				
+					// If we've reached the end of the set, then return nothing
+					// Else, push the iterator and the value, and then advance the iterator
+					if (*it == setData.end())
+						return 0;
+					else
+					{
+						lua_pushvalue(L, 2);
+						ObjectToLua(&**it, vector<size_t>{typeid(KeyType).hash_code()});
+						(*it)++;
+					}
+					return 2;
 				}
 			);
 		}
