@@ -3,6 +3,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "Map.h"
+#include "common.h"
 
 #include <iostream>
 
@@ -11,8 +12,8 @@ using namespace std;
 LuaUtil::MapAttributeInstance::MapAttributeInstance(
 		std::function<void(void *mapPointer)> get,
 		std::function<void(void *mapPointer)> set,
-		std::function<void(void *mapPointer)> list) :
-	get(get), set(set), list(list)
+		std::function<void(void *mapPointer)> table) :
+	get(get), set(set), table(table)
 {
 	
 }
@@ -40,6 +41,11 @@ void LuaUtil::MapAttributeInstance::CreateUserdata(lua_State *L, void *mapPointe
 	lua_settable(L, -3);
 	
 	
+	lua_pushstring(L, "_pointer");
+	lua_pushlightuserdata(L, mapPointer);
+	lua_settable(L, -3);
+	
+	
 	lua_setmetatable(L, -2);
 	
 };
@@ -62,5 +68,15 @@ int LuaUtil::MapAttributeInstance::CFunction_newindex(lua_State *L)
 	luaL_checktype(L, lua_upvalueindex(1), LUA_TLIGHTUSERDATA);
 	void *mapPointer = lua_touserdata(L, lua_upvalueindex(1));
 	mapData->set(mapPointer);
+	return 1;
+}
+
+
+
+int LuaUtil::MapAttributeInstance::CFunction_table(lua_State *L)
+{
+	LuaUtil::MapAttributeInstance *mapData = *reinterpret_cast<LuaUtil::MapAttributeInstance**>(luaL_checkudata(L, 1, "LuaUtil.MapAttributeInstance"));
+	void *mapPointer = getObjectPointerFromMetatable(L);
+	mapData->table(mapPointer);
 	return 1;
 }

@@ -151,7 +151,7 @@ namespace LuaUtil {
 					LuaUtil::ObjectToLua(&value, {typeid(ValueType).hash_code()});
 				},
 				// Set function
-				[name](void *vectorPointer) {
+				[](void *vectorPointer) {
 					vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
 					size_t key;
 					ValueType value;
@@ -170,7 +170,20 @@ namespace LuaUtil {
 					else 
 						vectorData[key] = value;
 				},
-				nullptr
+				// Table function
+				[](void *vectorPointer) {
+					vector<ValueType> &vectorData = *reinterpret_cast<vector<ValueType>*>(vectorPointer);
+					size_t index = 1;
+					
+					lua_createtable(L, vectorData.size(), 0);
+					for(ValueType &it : vectorData)
+					{
+						LuaUtil::LuaToObject(&it, {typeid(ValueType).hash_code()});
+						LuaUtil::LuaToObject(&index,{typeid(size_t ).hash_code()});
+						lua_settable(L, -3);
+						++index;
+					}
+				}
 			);
 		}
 		
@@ -200,7 +213,18 @@ namespace LuaUtil {
 					
 					mapData[key] = value;
 				},
-				nullptr
+				// Table function
+				[](void *mapPointer)
+				{
+					map<KeyType, ValueType> &mapData = *reinterpret_cast<map<KeyType, ValueType>*>(mapPointer);
+					lua_newtable(L);
+					for(auto &it : mapData)
+					{
+						LuaUtil::ObjectToLua(&it.first, {typeid(KeyType).hash_code()});
+						LuaUtil::ObjectToLua(&it.second, {typeid(ValueType).hash_code()});
+						lua_settable(L, -3);
+					}
+				}
 			);
 		}
 		
@@ -216,8 +240,17 @@ namespace LuaUtil {
 				// Remove function
 				nullptr,
 				// Has function
-				nullptr,
-				// List function
+				[](void *setPointer)
+				{
+					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
+					
+					KeyType k;
+					lua_pushvalue(L, 2);
+					LuaToObject(&k, {typeid(KeyType).hash_code()});
+					
+					lua_pushboolean(L, setData.count(k));
+				},
+				// Table function
 				[](void *setPointer)
 				{
 					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
@@ -230,40 +263,6 @@ namespace LuaUtil {
 						lua_settable(L, -3);
 						index++;
 					}
-				},
-				// Pairs function
-				[](void *setPointer) -> int
-				{
-					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
-					
-					
-					// The pairs() function returns 3 values
-					// 1: The iterator function
-					lua_pushcclosure(L, SetAttributeInstance::CFunction_next, 0);
-					// 2: The object to iterate on (which is this one)
-					lua_pushvalue(L, 1);
-					// 3: The starting argument for next()
-					*reinterpret_cast<typename set<KeyType>::iterator*>(lua_newuserdata(L, sizeof(setData.begin()))) = setData.begin();
-					
-					return 3;
-				},
-				// Next function
-				[](void *setPointer) -> int
-				{
-					set<KeyType> &setData = *reinterpret_cast<set<KeyType>*>(setPointer);
-					typename set<KeyType>::iterator *it = reinterpret_cast<typename set<KeyType>::iterator*>(lua_touserdata(L, 2));
-				
-					// If we've reached the end of the set, then return nothing
-					// Else, push the iterator and the value, and then advance the iterator
-					if (*it == setData.end())
-						return 0;
-					else
-					{
-						lua_pushvalue(L, 2);
-						ObjectToLua(&**it, vector<size_t>{typeid(KeyType).hash_code()});
-						(*it)++;
-					}
-					return 2;
 				}
 			);
 		}
@@ -289,7 +288,7 @@ namespace LuaUtil {
 					}
 				},
 				// Set function
-				[name](void *setPointer) {
+				[](void *setPointer) {
 					Set<ValueType> &setData = *reinterpret_cast<Set<ValueType>*>(setPointer);
 					string key;
 					ValueType value;
@@ -298,7 +297,18 @@ namespace LuaUtil {
 					
 					*setData.Get(key) = value;
 				},
-				nullptr
+				// Table function
+				[](void *setPointer)
+				{
+					Set<ValueType> &setData = *reinterpret_cast<Set<ValueType>*>(setPointer);
+					lua_newtable(L);
+					for(auto &it : setData)
+					{
+						LuaUtil::ObjectToLua(&it.first, {typeid(string).hash_code()});
+						LuaUtil::ObjectToLua(&it.second, {typeid(ValueType).hash_code()});
+						lua_settable(L, -3);
+					}
+				}
 			);
 		}
 		
@@ -349,7 +359,6 @@ public:
 template <typename T>
 LuaUtil::ClassDefinition& LuaUtil::AddDefinition()
 {
-	printf("%lx\n", typeid(T).hash_code());
 	LuaUtil::definitions[typeid(T).hash_code()] = LuaUtil::ClassDefinition();
 	return LuaUtil::definitions[typeid(T).hash_code()];
 	

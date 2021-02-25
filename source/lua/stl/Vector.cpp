@@ -4,6 +4,7 @@
 
 #include "Vector.h"
 
+#include "common.h"
 #include <iostream>
 
 using namespace std;
@@ -63,4 +64,11 @@ int LuaUtil::VectorAttributeInstance::CFunction_newindex(lua_State *L)
 	void *vectorPointer = lua_touserdata(L, lua_upvalueindex(1));
 	vectorData->set(vectorPointer);
 	return 1;
+}
+
+
+
+int LuaUtil::VectorAttributeInstance::CFunction_table(lua_State *L)
+{
+	return 0; // TODO	
 }

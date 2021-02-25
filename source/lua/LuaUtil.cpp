@@ -24,15 +24,15 @@ namespace {
 	
 	// We will override the default "pairs" and "ipairs" function to change their behaviour
 	// They will allow us to iterate over our own STL wrappers (i.e. vector, map, etc.)
-	int CFunction_pairs(lua_State *L)
+	// To do this, we'll convert them to tables and then use the original pairs function
+	// The 1st upvalue here is the function to call internally: either originalPairs or originalIpairs
+	// The reason why they're not separate functions is to avoid code repetition.
+	int CFunction_pairs_or_ipairs(lua_State *L)
 	{
 		if (!lua_isuserdata(L, 1))
 			return originalPairs(L);
 		
-		lua_pushvalue(L, 1);
-		
-		
-		lua_getmetatable(L, -1);
+		lua_getmetatable(L, 1);
 		
 		// Note: For Lua 5.1, the name is stored differently.
 		lua_pushstring(L, "__name");
@@ -45,36 +45,81 @@ namespace {
 		
 		// Pop the metatable
 		lua_pop(L, 1);
-		// Pop the copied userdata
-		lua_pop(L, 1); 
+		
+		lua_CFunction tableFunction = nullptr;
 		
 		if (registryName == "LuaUtil.SetAttributeInstance")
-			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);/*
+			tableFunction = LuaUtil::SetAttributeInstance::CFunction_table;
 		else if (registryName == "LuaUtil.MapAttributeInstance")
-			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);
+			tableFunction = LuaUtil::MapAttributeInstance::CFunction_table;
 		else if (registryName == "LuaUtil.VectorAttributeInstance")
-			return LuaUtil::SetAttributeInstance::CFunction_pairs(L);*/
+			tableFunction = LuaUtil::VectorAttributeInstance::CFunction_table;
+		
+		if (!tableFunction)
+		{
+			luaL_error(L, "invalid argument #1 to pairs (userdata %s can not be iterated over)", registryName.c_str());
+		}
 		
 		
-		return 0;	
+		// We call the function to get the table
+		// Argument 1 is the userdata, which is passed over to this function
+		lua_pushcfunction(L, tableFunction);
+		lua_pushvalue(L, 1);
+		lua_call(L, 1, 1);
+		
+		int stackSize = lua_gettop(L);
+		// Call the original pairs() function with our table
+		lua_pushvalue(L, lua_upvalueindex(1));
+		lua_pushvalue(L, -2);
+		lua_call(L, 1, LUA_MULTRET);
+		
+		return lua_gettop(L) - stackSize;
 	}
 	
 	
 	
-	int CFunction_ipairs(lua_State *L)
+	int CFunction_table_call_internal(lua_State *L)
 	{
-		if (!lua_isuserdata(L, 1))
-			return originalPairs(L);
+		luaL_checktype(L, 1, LUA_TUSERDATA);
+		
+		lua_pushvalue(L, 1);
+		
+		lua_getmetatable(L, -1);
+		
+		// Note: For Lua 5.1, the name is stored differently.
+		lua_pushstring(L, "__name");
+		lua_gettable(L, -2);
+		if (!lua_isstring(L, -1))
+			// This userdata has no name.
+			luaL_error(L, "invalid argument #1 to table (named userdata expected, got nameless userdata)");
+		
+		string registryName(lua_tostring(L, -1));
+		
+		// Pop the metatable
+		lua_pop(L, 1);
+		// Pop the copied userdata
+		lua_pop(L, 1);
+		
+		if (registryName == "LuaUtil.SetAttributeInstance")
+			return LuaUtil::SetAttributeInstance::CFunction_table(L);
+		else if (registryName == "LuaUtil.MapAttributeInstance")
+			return LuaUtil::MapAttributeInstance::CFunction_table(L);
+		/*else if (registryName == "LuaUtil.VectorAttributeInstance")
+			return LuaUtil::VectorAttributeInstance::CFunction_table(L);*/
+		
 		return 0;
 	}
-	
-	
 	
 	int CFunction_table_call(lua_State *L)
 	{
-		cout << "Table call" << endl;
-		return 0;
+		int stackSize = lua_gettop(L);
+		lua_pushcfunction(L, CFunction_table_call_internal);
+		lua_pushvalue(L, 2);
+		lua_call(L, 1, LUA_MULTRET);
+		return lua_gettop(L) - stackSize;
 	}
+	
+	
 }
 
 lua_State *LuaUtil::L = luaL_newstate();
@@ -94,10 +139,13 @@ void LuaUtil::Initialize()
 	originalIpairs = lua_tocfunction(L, -1);
 	lua_pop(L, 1);
 	
-	lua_pushcfunction(L, CFunction_pairs);
+	
+	lua_pushcfunction(L, originalPairs);
+	lua_pushcclosure(L, CFunction_pairs_or_ipairs, 1);
 	lua_setglobal(L, "pairs");
 	
-	lua_pushcfunction(L, CFunction_ipairs);
+	lua_pushcfunction(L, originalIpairs);
+	lua_pushcclosure(L, CFunction_pairs_or_ipairs, 1);
 	lua_setglobal(L, "ipairs");
 	
 	// This is the equialent of the following Lua code:

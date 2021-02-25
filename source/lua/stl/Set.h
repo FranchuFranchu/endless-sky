@@ -20,9 +20,7 @@ namespace LuaUtil
 		std::function<void(void *setPointer)> add,
 		std::function<void(void *setPointer)> remove,
 		std::function<void(void *setPointer)> has,
-		std::function<void(void *setPointer)> list,
-		std::function<int(void *setPointer)> pairs = nullptr,
-		std::function<int(void *setPointer)> next = nullptr);
+		std::function<void(void *setPointer)> table);
 		
 		~SetAttributeInstance() = default;
 		
@@ -31,7 +29,7 @@ namespace LuaUtil
 		static int CFunction_add(lua_State *L);
 		static int CFunction_has(lua_State *L);
 		static int CFunction_remove(lua_State *L);
-		static int CFunction_list(lua_State *L);
+		static int CFunction_table(lua_State *L);
 		
 		static int CFunction_pairs(lua_State *L);
 		static int CFunction_next(lua_State *L);
@@ -41,9 +39,7 @@ namespace LuaUtil
 		std::function<void(void *setPointer)> add;
 		std::function<void(void *setPointer)> remove;
 		std::function<void(void *setPointer)> has;
-		std::function<void(void *setPointer)> list;
-		std::function<int(void *setPointer)> pairs;
-		std::function<int(void *setPointer)> next;
+		std::function<void(void *setPointer)> table;
 		
 		size_t keyType = 0;
 		size_t valueType = 0;

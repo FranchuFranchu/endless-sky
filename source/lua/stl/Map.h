@@ -19,7 +19,7 @@ namespace LuaUtil
 		MapAttributeInstance(
 		std::function<void(void *mapPointer)> get,
 		std::function<void(void *mapPointer)> set,
-		std::function<void(void *mapPointer)> list);
+		std::function<void(void *mapPointer)> table);
 		
 		~MapAttributeInstance() = default;
 		
@@ -31,11 +31,13 @@ namespace LuaUtil
 		static int CFunction_pairs(lua_State *L);
 		static int CFunction_next(lua_State *L);
 		
+		static int CFunction_table(lua_State *L);
+		
 		void CreateUserdata(lua_State *L, void *mapPointer) const;
 	public:
 		std::function<void(void *mapPointer)> get;
 		std::function<void(void *mapPointer)> set;
-		std::function<void(void *mapPointer)> list;
+		std::function<void(void *mapPointer)> table;
 		
 		size_t keyType = 0;
 		size_t valueType = 0;

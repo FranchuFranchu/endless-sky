@@ -3,6 +3,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "Set.h"
+#include "common.h"
 
 #include <iostream>
 
@@ -12,10 +13,8 @@ LuaUtil::SetAttributeInstance::SetAttributeInstance(
 		std::function<void(void *setPointer)> add,
 		std::function<void(void *setPointer)> remove,
 		std::function<void(void *setPointer)> has,
-		std::function<void(void *setPointer)> list,
-		std::function<int(void *setPointer)> pairs,
-		std::function<int(void *setPointer)> next ) :
-	add(add), remove(remove), has(has), list(list), pairs(pairs), next(next)
+		std::function<void(void *setPointer)> table) :
+	add(add), remove(remove), has(has), table(table)
 {
 	
 }
@@ -49,9 +48,9 @@ void LuaUtil::SetAttributeInstance::CreateUserdata(lua_State *L, void *setPointe
 	lua_pushcclosure(L, &LuaUtil::SetAttributeInstance::CFunction_has, 1);
 	lua_settable(L, -3);
 	
-	lua_pushstring(L, "list");
+	lua_pushstring(L, "table");
 	lua_pushlightuserdata(L, setPointer);
-	lua_pushcclosure(L, &LuaUtil::SetAttributeInstance::CFunction_list, 1);
+	lua_pushcclosure(L, &LuaUtil::SetAttributeInstance::CFunction_table, 1);
 	lua_settable(L, -3);
 	
 	// metatable.__index = function_table
@@ -66,68 +65,37 @@ void LuaUtil::SetAttributeInstance::CreateUserdata(lua_State *L, void *setPointe
 };
 
 namespace {
-	inline LuaUtil::SetAttributeInstance *getSetData(lua_State *L)
+	inline LuaUtil::SetAttributeInstance *getObjectData(lua_State *L)
 	{
 		LuaUtil::SetAttributeInstance *setData = *reinterpret_cast<LuaUtil::SetAttributeInstance**>(luaL_checkudata(L, 1, "LuaUtil.SetAttributeInstance"));
 		return setData;
-	}
-	inline void *getSetPointer(lua_State *L)
-	{
-		void *setPointer = lua_touserdata(L, lua_upvalueindex(1));
-		luaL_checktype(L, lua_upvalueindex(1), LUA_TLIGHTUSERDATA);
-		return setPointer;
-	}
-	inline void *getSetPointerFromMetatable(lua_State *L)
-	{
-		lua_getmetatable(L, 1);
-		lua_pushstring(L, "_pointer");
-		lua_gettable(L, -2);
-		void *setPointer = lua_touserdata(L, -1);
-		// Pop the metatable
-		lua_pop(L, 1); 
-		return setPointer;
 	}
 }
 
 
 int LuaUtil::SetAttributeInstance::CFunction_add(lua_State *L)
 {
-	getSetData(L)->add(getSetPointer(L));
+	getObjectData(L)->add(getObjectPointer(L));
 	return 1;
 }
 
 
 int LuaUtil::SetAttributeInstance::CFunction_remove(lua_State *L)
 {
-	getSetData(L)->remove(getSetPointer(L));
+	getObjectData(L)->remove(getObjectPointer(L));
 	return 1;
 }
 
 
 int LuaUtil::SetAttributeInstance::CFunction_has(lua_State *L)
 {
-	getSetData(L)->has(getSetPointer(L));
+	getObjectData(L)->has(getObjectPointer(L));
 	return 1;
 }
 
 
-int LuaUtil::SetAttributeInstance::CFunction_list(lua_State *L)
+int LuaUtil::SetAttributeInstance::CFunction_table(lua_State *L)
 {
-	getSetData(L)->list(getSetPointer(L));
+	getObjectData(L)->table(getObjectPointer(L));
 	return 1;
 }
-
-
-
-int LuaUtil::SetAttributeInstance::CFunction_pairs(lua_State *L)
-{
-	return getSetData(L)->pairs(getSetPointerFromMetatable(L));
-}
-
-
-
-int LuaUtil::SetAttributeInstance::CFunction_next(lua_State *L)
-{
-	return getSetData(L)->next(getSetPointerFromMetatable(L));
-}
-		

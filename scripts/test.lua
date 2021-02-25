@@ -1,11 +1,9 @@
-print("Aescolanus:")
+ember_waste_systems = {}
 
-for k, v in pairs(endless_sky.systems.Aescolanus.attributes) do
-	print(" ", v)
+for k, v in pairs(endless_sky.systems) do
+	if v.attributes:has("ember waste") then
+		ember_waste_systems[#ember_waste_systems+1] = k .. ", "
+	end
 end
 
-print("Rutilicus:")
-
-for k, v in pairs(endless_sky.systems.Rutilicus.attributes) do
-	print(" ", v)
-end
+print(table.concat(ember_waste_systems))

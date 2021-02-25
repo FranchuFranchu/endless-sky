@@ -222,6 +222,9 @@ bool GameData::BeginLoad(const char * const *argv)
 		
 		// Same as above, but for Lua scripts
 		vector<string> scripts = Files::RecursiveList(source + "scripts/");
+		
+    	sort(scripts.begin(), scripts.end()); 
+		
 		for(const string &path : scripts)
 			LoadScript(path);
 	}
