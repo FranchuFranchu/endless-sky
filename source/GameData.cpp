@@ -630,6 +630,10 @@ void GameData::Change(const DataNode &node)
 		shipSales.Get(node.Token(1))->Load(node, ships);
 	else if(node.Token(0) == "system" && node.Size() >= 2)
 		systems.Get(node.Token(1))->Load(node, planets);
+	else if(node.Token(0) == "ship" && node.Size() >= 2)
+		ships.Get(node.Token(1))->Load(node);
+	else if(node.Token(0) == "outfit" && node.Size() >= 2)
+		outfits.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "news" && node.Size() >= 2)
 		news.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "link" && node.Size() >= 3)

@@ -200,6 +200,8 @@ void Outfit::Load(const DataNode &node)
 			// Jump range must be positive.
 			attributes[child.Token(0)] = max(0., child.Value(1));
 		}
+		else if(child.Token(0) == "add" && child.Size() >= 3)
+			attributes[child.Token(1)] += child.Value(2);
 		else if(child.Size() >= 2)
 			attributes[child.Token(0)] = child.Value(1);
 		else

@@ -54,6 +54,16 @@ namespace {
 	const vector<string> ENGINE_SIDE = {"under", "over"};
 	const vector<string> STEERING_FACING = {"none", "left", "right"};
 	
+	// Nodes where explicitly prefixing with "add" is not redundant and works.
+	const set<string> ADDABLE_NODES = {
+		"attributes",
+	};
+	// Nodes which you can "remove" to clear them
+	const set<string> REMOVABLE_NODES = {
+		"outfits",
+	};
+
+	
 	const double MAXIMUM_TEMPERATURE = 100.;
 	
 	const double SCAN_TIME = 60.;
@@ -189,14 +199,26 @@ void Ship::Load(const DataNode &node)
 	bool hasFinalExplode = false;
 	bool hasOutfits = false;
 	bool hasDescription = false;
+	bool recalculateAttributes = false;
+	
 	for(const DataNode &child : node)
 	{
-		const string &key = child.Token(0);
-		bool add = (key == "add");
-		if(add && (child.Size() < 2 || child.Token(1) != "attributes"))
+		const bool add = (child.Token(0) == "add");
+		const bool remove = (child.Token(0) == "remove");
+		if((add || remove) && child.Size() < 2)
 		{
-			child.PrintTrace("Skipping invalid use of 'add' with " + (child.Size() < 2
-					? "no key." : "key: " + child.Token(1)));
+			child.PrintTrace("Skipping invalid use of '" + child.Token(0) +"' with no key");
+			continue;
+		}
+		const string &key = (add || remove) ? child.Token(1) : child.Token(0);
+		if(add && !ADDABLE_NODES.count(key))
+		{
+			child.PrintTrace("Skipping invalid use of 'add' with key " + key); 
+			continue;
+		}
+		if(remove && !REMOVABLE_NODES.count(key))
+		{
+			child.PrintTrace("Skipping invalid use of 'remove' with key " + key); 
 			continue;
 		}
 		if(key == "sprite")
@@ -211,9 +233,14 @@ void Ship::Load(const DataNode &node)
 			noun = child.Token(1);
 		else if(key == "swizzle" && child.Size() >= 2)
 			customSwizzle = child.Value(1);
-		else if(key == "attributes" || add)
+		else if(key == "attributes")
 		{
-			if(!add)
+			if (remove)
+			{
+				baseAttributes = Outfit();
+				attributes = Outfit();
+			}
+			else if(!add)
 				baseAttributes.Load(child);
 			else
 			{
@@ -411,11 +438,13 @@ void Ship::Load(const DataNode &node)
 		}
 		else if(key == "outfits")
 		{
-			if(!hasOutfits)
-			{
+			if(remove || (!hasOutfits && !add))
 				outfits.clear();
+			if(!hasOutfits && !remove)
 				hasOutfits = true;
-			}
+			if(remove || add)
+				recalculateAttributes = true;
+			
 			for(const DataNode &grand : child)
 			{
 				int count = (grand.Size() >= 2) ? grand.Value(1) : 1;
@@ -460,6 +489,11 @@ void Ship::Load(const DataNode &node)
 		}
 		else if(key != "actions")
 			child.PrintTrace("Skipping unrecognized attribute:");
+	}
+	
+	if (recalculateAttributes)
+	{
+		FinishLoading(false);
 	}
 }
 

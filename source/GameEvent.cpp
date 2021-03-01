@@ -33,6 +33,8 @@ namespace {
 		"planet",
 		"shipyard",
 		"system",
+		"ship",
+		"outfit",
 	};
 }
 
