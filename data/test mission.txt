@@ -1,0 +1,21 @@
+
+mission "Get lots of bunks"
+	name "Get lots of bunks"
+	landing
+	source "New Boston"
+	destination "New Greenland"
+	
+	on offer
+		conversation
+			"hey can you get lots of bunks"
+			choice
+				"yeah sure"
+					accept
+				"nope"
+					decline
+		
+	to complete
+		"flagship attribute: bunks" > 3
+	
+	on complete
+		dialog "Well done you have lots of bunks"

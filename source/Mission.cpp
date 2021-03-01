@@ -655,10 +655,10 @@ bool Mission::CanOffer(const PlayerInfo &player, const shared_ptr<Ship> &boardin
 			return false;
 	}
 	
-	if(!toOffer.Test(player.Conditions()))
+	if(!toOffer.Test(player.Conditions(), [&player](const string &name) -> int64_t {return player.DefaultConditionFunction(name);}))
 		return false;
 	
-	if(!toFail.IsEmpty() && toFail.Test(player.Conditions()))
+	if(!toFail.IsEmpty() && toFail.Test(player.Conditions(), [&player](const string &name) -> int64_t {return player.DefaultConditionFunction(name);}))
 		return false;
 	
 	if(repeat)
@@ -726,7 +726,7 @@ bool Mission::IsSatisfied(const PlayerInfo &player) const
 		return false;
 	
 	// Test the completion conditions for this mission.
-	if(!toComplete.Test(player.Conditions()))
+	if(!toComplete.Test(player.Conditions(), [&player](const string &name) -> int64_t {return player.DefaultConditionFunction(name);}))
 		return false;
 	
 	// Determine if any fines or outfits that must be transferred, can.
@@ -764,7 +764,7 @@ bool Mission::IsSatisfied(const PlayerInfo &player) const
 
 bool Mission::HasFailed(const PlayerInfo &player) const
 {
-	if(!toFail.IsEmpty() && toFail.Test(player.Conditions()))
+	if(!toFail.IsEmpty() && toFail.Test(player.Conditions(), [&player](const string &name) -> int64_t {return player.DefaultConditionFunction(name);}))
 		return true;
 	
 	for(const NPC &npc : npcs)

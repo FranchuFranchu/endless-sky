@@ -14,13 +14,14 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #define CONDITION_SET_H_
 
 #include <map>
+#include <functional>
 #include <string>
 #include <vector>
 
 class DataNode;
 class DataWriter;
 
-
+using DefaultFunction = std::function<int64_t(const std::string&)>;
 
 // A condition set is a collection of operations on the player's set of named
 // "conditions". This includes "test" operations that just check the values of
@@ -52,18 +53,19 @@ public:
 	
 	// Check if the given condition values satisfy this set of expressions. First applies
 	// all assignment expressions to create any temporary conditions, then evaluates.
-	bool Test(const Conditions &conditions) const;
+	// defaultFunction is called when a variable is not found
+	bool Test(const Conditions &condition, DefaultFunction defaultFunctions = [](const std::string& name){return 0;}) const;
 	// Modify the given set of conditions with this ConditionSet.
 	// (Order of operations is like the order of specification: all sibling
 	// expressions are applied, then any and/or nodes are applied.)
-	void Apply(Conditions &conditions) const;
+	void Apply(Conditions &conditions, DefaultFunction defaultFunction = [](const std::string& name){return 0;}) const;
 	
 	
 private:
 	// Compare this set's expressions and the union of created and supplied conditions.
-	bool TestSet(const Conditions &conditions, const Conditions &created) const;
+	bool TestSet(const Conditions &conditions, const Conditions &created, DefaultFunction defaultFunction) const;
 	// Evaluate this set's assignment expressions and store the result in "created" (for use by TestSet).
-	void TestApply(const Conditions &conditions, Conditions &created) const;
+	void TestApply(const Conditions &conditions, Conditions &created, DefaultFunction defaultFunction) const;
 	
 	
 private:
@@ -87,9 +89,9 @@ private:
 		bool IsTestable() const;
 		
 		// Functions to use this expression:
-		bool Test(const Conditions &conditions, const Conditions &created) const;
-		void Apply(Conditions &conditions, Conditions &created) const;
-		void TestApply(const Conditions &conditions, Conditions &created) const;
+		bool Test(const Conditions &conditions, const Conditions &created, DefaultFunction defaultFunction) const;
+		void Apply(Conditions &conditions, Conditions &created, DefaultFunction defaultFunction) const;
+		void TestApply(const Conditions &conditions, Conditions &created, DefaultFunction defaultFunction) const;
 		
 		
 	private:
@@ -110,7 +112,7 @@ private:
 			bool IsEmpty() const;
 			
 			// Substitute numbers for any string values and then compute the result.
-			int64_t Evaluate(const Conditions &conditions, const Conditions &created) const;
+			int64_t Evaluate(const Conditions &conditions, const Conditions &created, DefaultFunction defaultFunction) const;
 			
 			
 		private:

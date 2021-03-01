@@ -196,6 +196,10 @@ public:
 	int64_t GetCondition(const std::string &name) const;
 	std::map<std::string, int64_t> &Conditions();
 	const std::map<std::string, int64_t> &Conditions() const;
+	
+	// This function should get called when a ConditionSet related to the player didn't find a variable
+	int64_t DefaultConditionFunction(const std::string &name) const;
+	
 	// Set and check the reputation conditions, which missions and events
 	// can use to modify the player's reputation with other governments.
 	void SetReputationConditions();

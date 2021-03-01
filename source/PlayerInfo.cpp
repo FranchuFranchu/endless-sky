@@ -1816,6 +1816,49 @@ const map<string, int64_t> &PlayerInfo::Conditions() const
 
 
 
+int64_t PlayerInfo::DefaultConditionFunction(const std::string &name) const
+{
+	// The following pseudo-variables can be used
+	// "flagship attribute: X" Value of attribute X in the flagship
+	// "maximum fleet attribute: X" Maximum value of attribute X in all owned ships
+	// "total fleet attribute: X" Sum of all values of attribute X in all owned ships
+	
+	size_t colonIndex = name.find_first_of(":");
+	
+	if (colonIndex == size_t(-1))
+		return 0;
+	
+	string prefix = name.substr(0, colonIndex);
+	string postfix = name.substr(colonIndex+1);
+	
+	// Remove spaces at the start of the postfix
+	postfix = postfix.substr(postfix.find_first_not_of(" "));
+	
+	if (prefix == "flagship attribute")
+		return flagship->Attributes().Attributes().Get(postfix);
+	if (prefix == "maximum fleet attribute")
+	{
+		int64_t maximumValue = -1;
+		for(auto &it : ships)
+			maximumValue = max(it->Attributes().Attributes().Get(postfix), double(maximumValue));
+		
+		return maximumValue;
+	}
+	if (prefix == "total fleet attribute")
+	{
+		int64_t sum = 0;
+		for(auto &it : ships)
+			sum += it->Attributes().Attributes().Get(postfix);
+		
+		return sum;
+	}
+	
+	
+	return 0;
+}
+
+
+
 // Set and check the reputation conditions, which missions and events can use to
 // modify the player's reputation with other governments.
 void PlayerInfo::SetReputationConditions()
