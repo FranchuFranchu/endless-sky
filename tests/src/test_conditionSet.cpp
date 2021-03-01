@@ -19,6 +19,9 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "../../source/DataFile.h"
 #include "../../source/DataNode.h"
 
+// Include ConditionStore, to enable usage of them for testing ConditionSets.
+#include "../../source/ConditionsStore.h"
+
 // ... and any system includes needed for the test file.
 #include <map>
 #include <sstream>
@@ -135,21 +138,21 @@ SCENARIO( "Determining if condition requirements are met", "[ConditionSet][Usage
 }
 
 SCENARIO( "Applying changes to conditions", "[ConditionSet][Usage]" ) {
-	auto mutableList = ConditionSet::Conditions{};
-	REQUIRE( mutableList.empty() );
+	auto store = ConditionSet::Conditions{};
+	REQUIRE( store.GetPrimaryConditions().empty() );
 	
 	GIVEN( "an empty ConditionSet" ) {
 		const auto emptySet = ConditionSet{};
 		REQUIRE( emptySet.IsEmpty() );
 		
 		THEN( "no conditions are added via Apply" ) {
-			emptySet.Apply(mutableList);
-			REQUIRE( mutableList.empty() );
+			emptySet.Apply(store);
+			REQUIRE( store.GetPrimaryConditions().empty() );
 			
-			mutableList.emplace("event: war begins", 1);
-			REQUIRE( mutableList.size() == 1 );
-			emptySet.Apply(mutableList);
-			REQUIRE( mutableList.size() == 1 );
+			store.SetCondition("event: war begins", 1);
+			REQUIRE( store.GetPrimaryConditions().size() == 1 );
+			emptySet.Apply(store);
+			REQUIRE( store.GetPrimaryConditions().size() == 1 );
 		}
 	}
 	GIVEN( "a ConditionSet with only comparison expressions" ) {
@@ -161,13 +164,13 @@ SCENARIO( "Applying changes to conditions", "[ConditionSet][Usage]" ) {
 		REQUIRE_FALSE( compareSet.IsEmpty() );
 		
 		THEN( "no conditions are added via Apply" ) {
-			compareSet.Apply(mutableList);
-			REQUIRE( mutableList.empty() );
+			compareSet.Apply(store);
+			REQUIRE( store.GetPrimaryConditions().empty() );
 			
-			mutableList.emplace("event: war begins", 1);
-			REQUIRE( mutableList.size() == 1 );
-			compareSet.Apply(mutableList);
-			REQUIRE( mutableList.size() == 1 );
+			store.SetCondition("event: war begins", 1);
+			REQUIRE( store.GetPrimaryConditions().size() == 1 );
+			compareSet.Apply(store);
+			REQUIRE( store.GetPrimaryConditions().size() == 1 );
 		}
 	}
 	GIVEN( "a ConditionSet with an assignable expression" ) {
@@ -175,11 +178,11 @@ SCENARIO( "Applying changes to conditions", "[ConditionSet][Usage]" ) {
 		REQUIRE_FALSE( applySet.IsEmpty() );
 		
 		THEN( "the condition list is updated via Apply" ) {
-			applySet.Apply(mutableList);
-			REQUIRE_FALSE( mutableList.empty() );
+			applySet.Apply(store);
+			REQUIRE_FALSE( store.GetPrimaryConditions().empty() );
 			
-			const auto &inserted = mutableList.find("year");
-			REQUIRE( inserted != mutableList.end() );
+			const auto &inserted = store.GetPrimaryConditions().find("year");
+			REQUIRE( inserted != store.GetPrimaryConditions().end() );
 			CHECK( inserted->second == 3013 );
 		}
 	}

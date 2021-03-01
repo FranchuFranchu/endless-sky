@@ -58,7 +58,7 @@ OutfitterPanel::OutfitterPanel(PlayerInfo &player)
 	
 	// Add owned licenses
 	const string PREFIX = "license: ";
-	for(auto &it : player.Conditions())
+	for(auto &it : player.GetPrimaryConditions())
 		if(it.first.compare(0, PREFIX.length(), PREFIX) == 0 && it.second > 0)
 		{
 			const string name = it.first.substr(PREFIX.length()) + " License";
@@ -353,7 +353,7 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 		player.Accounts().AddCredits(-licenseCost);
 		for(const string &licenseName : selectedOutfit->Licenses())
 			if(!player.GetCondition("license: " + licenseName))
-				player.Conditions()["license: " + licenseName] = true;
+				player.SetCondition("license: " + licenseName, true);
 	}
 	
 	int modifier = Modifier();
@@ -378,10 +378,10 @@ void OutfitterPanel::Buy(bool alreadyOwned)
 		// Special case: licenses.
 		if(IsLicense(selectedOutfit->Name()))
 		{
-			auto &entry = player.Conditions()[LicenseName(selectedOutfit->Name())];
-			if(entry <= 0)
+			string licenseName = LicenseName(selectedOutfit->Name());
+			if(player.GetCondition(licenseName) <= 0)
 			{
-				entry = true;
+				player.SetCondition(licenseName, true);
 				int64_t price = player.StockDepreciation().Value(selectedOutfit, day);
 				player.Accounts().AddCredits(-price);
 			}

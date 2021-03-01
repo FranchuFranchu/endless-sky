@@ -25,6 +25,19 @@ namespace {
 	// For tracking the player's average income, store daily net worth over this
 	// number of days.
 	const unsigned HISTORY = 100;
+	
+	// Enumaration to minimize the risk of typos compared to using string identifiers.
+	enum class AccountCondition {NET_WORTH, CREDITS, UNPAID_MORTGAGES, UNPAID_FINES, UNPAID_SALARIES, UNPAID_MAINTENANCE, CREDIT_SCORE};
+	
+	const map<AccountCondition, const string> CONDITION_TO_TEXT = {
+		{AccountCondition::NET_WORTH, "net worth"},
+		{AccountCondition::CREDITS, "credits"},
+		{AccountCondition::UNPAID_MORTGAGES, "unpaid mortgages"},
+		{AccountCondition::UNPAID_FINES, "unpaid fines"},
+		{AccountCondition::UNPAID_SALARIES, "unpaid salaries"},
+		{AccountCondition::UNPAID_MAINTENANCE, "unpaid maintenance"},
+		{AccountCondition::CREDIT_SCORE, "credit score"}
+	};
 }
 
 
@@ -401,4 +414,82 @@ int64_t Account::YearlyRevenue() const
 	// Note that this intentionally under-estimates if the player has not yet
 	// played for long enough to accumulate a full income history.
 	return ((history.back() - history.front()) * 365) / HISTORY;
+}
+
+
+
+int64_t Account::GetConditionImpl(const string &name) const
+{
+	AccountCondition aC = AccountCondition::CREDITS;
+	bool found = false;
+	
+	for(auto it: CONDITION_TO_TEXT)
+		if(it.second == name)
+		{
+			aC = it.first;
+			found = true;
+		}
+	
+	if(!found)
+		return 0;
+
+	// Bound financial conditions to +/- 4.6 x 10^18 credits, within the range of a 64-bit int.
+	static constexpr int64_t limit = static_cast<int64_t>(1) << 62;
+	switch (aC)
+	{
+		case AccountCondition::CREDITS:
+			return min(limit, Credits());
+		case AccountCondition::CREDIT_SCORE:
+			return CreditScore();
+		case AccountCondition::NET_WORTH:
+			return min(limit, max(-limit, NetWorth()));
+		case AccountCondition::UNPAID_FINES:
+			return min(limit, TotalDebt("Fine"));
+		case AccountCondition::UNPAID_MAINTENANCE:
+			return min(limit, MaintenanceDue());
+		case AccountCondition::UNPAID_MORTGAGES:
+			return min(limit, TotalDebt("Mortgage"));
+		case AccountCondition::UNPAID_SALARIES:
+			return min(limit, SalariesOwed());
+		default:
+			return 0;
+	}
+}
+
+
+
+bool Account::HasConditionImpl(const string &name) const
+{
+	for(auto it: CONDITION_TO_TEXT)
+		if(it.second == name)
+			return true;
+	
+	return false;
+}
+
+
+
+bool Account::SetConditionImpl(const string &name, int64_t value)
+{
+	return false;
+}
+
+
+
+bool Account::EraseConditionImpl(const string &name)
+{
+	return false;
+}
+
+
+
+vector<string> Account::GetProvidedConditions() const
+{
+	// Unfortunately we need to return a vector (instead of a reference
+	// to vector) since we kept the map with the strings private in the
+	// anonymous namespace.
+	vector<string> providedNames;
+	for(auto it: CONDITION_TO_TEXT)
+		providedNames.emplace_back(it.second);
+	return providedNames;
 }
